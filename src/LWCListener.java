@@ -184,7 +184,7 @@ public class LWCListener extends PluginListener {
                         this.memoryDatabase.unregisterAllActions(player.getName());
                         return false;
                     }
-                    for (iBlocks = cblist.iterator();  iterator.hasNext();) {
+                    for (iBlocks = cblist.iterator();  iBlocks.hasNext();) {
                         ComplexBlock cb = iBlocks.next();
                         if ((!(cb instanceof Chest)) && (!(cb instanceof DoubleChest))) {
                             player.sendMessage("§4You need to select a chest as the Drop Transfer target!");
@@ -306,7 +306,7 @@ public class LWCListener extends PluginListener {
 
             String str = action.getData();
             String[] split = str.split(" ");
-            String cmd = split[0].toLowerCase();
+            String cmd = split[1].toLowerCase();
             String str3 = "";
 
             if (split.length > 1) {
@@ -380,7 +380,7 @@ public class LWCListener extends PluginListener {
                         }
 
                         this.physicalDatabase.registerProtectionRights(this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ()).getID(), str5, i3 != 0 ? 1 : 0, i4);
-                        player.sendMessage(new StringBuilder().append("§aRegistered rights for §6").append(str5).append(": ").append(i3 != 0 ? "[§4ADMIN§6]" : "").append(" [").append(i4 == 1 ? "Player" : "Group").append("]").toString());
+                        //player.sendMessage(new StringBuilder().append("§aRegistered rights for §6").append(str5).append(": ").append(i3 != 0 ? "[§4ADMIN§6]" : "").append(" [").append(i4 == 1 ? "Player" : "Group").append("]").toString());
                     }
                 }
             }
@@ -509,8 +509,7 @@ public class LWCListener extends PluginListener {
         for (ComplexBlock localComplexBlock : chestList) {
             Inventory chest = (Inventory) localComplexBlock;
             Item item;
-            while ((((item = chest.getItemFromId(dropItem.getItemId(), 63)) != null) || (chest.getEmptySlot() != -1))
-                    && (amount > 0)) {
+            while ((((item = chest.getItemFromId(dropItem.getItemId(), 63)) != null) || (chest.getEmptySlot() != -1)) && (amount > 0)) {
                 if (item != null) {
                     int k = Math.min(64 - item.getAmount(), dropItem.getAmount());
                     chest.setSlot(dropItem.getItemId(), item.getAmount() + k, item.getSlot());
@@ -529,11 +528,11 @@ public class LWCListener extends PluginListener {
             }
         }
 
-        player.sendMessage(String.format("Amount dropped: %d", dropItem.getAmount()));
-        player.sendMessage(String.format("Amount left: %d", amount));
-        if (dropItem.getAmount() - amount > 0) {
-            player.getInventory().removeItem(dropItem.getItemId(), dropItem.getAmount() - amount);
-        }
+      //  player.sendMessage(String.format("Amount dropped: %d", dropItem.getAmount()));
+      //  player.sendMessage(String.format("Amount left: %d", amount));
+       // if (dropItem.getAmount() - amount > 0) {
+       //     player.getInventory().removeItem(dropItem.getItemId(), dropItem.getAmount() - amount);
+       // }
 
         if (amount > 0) {
             player.sendMessage("§4Your chest is full. Drop transfer will be deactivated.");
@@ -544,8 +543,8 @@ public class LWCListener extends PluginListener {
             player.getInventory().addItem(dropItem);
         }
         player.getInventory().update();
-
-        return true;
+        itementity.destroy();
+        return false;
     }
 
     public boolean onOpenInventory(HookParametersOpenInventory openInventory) {

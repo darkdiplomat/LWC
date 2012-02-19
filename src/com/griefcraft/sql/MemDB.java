@@ -9,30 +9,32 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class MemDB extends Database {
-    public Action getAction(String name, String act) {
+	Logger log = Logger.getLogger("Minecraft");
+    public Action getAction(String act, String name) {
         try {
+        	Action localAction = new Action();
             PreparedStatement ps = this.connection.prepareStatement("SELECT * FROM `actions` WHERE `player` = ? AND `action` = ?");
             ps.setString(1, name);
             ps.setString(2, act);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
             	int i = rs.getInt("id");
-                String str1 = rs.getString("action");
-                String str2 = rs.getString("player");
+                String action = rs.getString("action");
+                String playername = rs.getString("player");
                 int j = rs.getInt("chest");
-                String str3 = rs.getString("data");
-                Action localAction = new Action();
+                String data = rs.getString("data");
                 localAction.setID(i);
-                localAction.setAction(str1);
-                localAction.setPlayer(str2);
+                localAction.setAction(action);
+                localAction.setPlayer(playername);
                 localAction.setChestID(j);
-                localAction.setData(str3);
-                return localAction;
+                localAction.setData(data);
             }
             ps.close();
             Performance.addMemDBQuery();
+            return localAction;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -251,8 +253,7 @@ public class MemDB extends Database {
     public void registerAction(String paramString1, String paramString2) {
         try {
             unregisterAction(paramString1, paramString2);
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("INSERT INTO `actions` (action, player, chest) VALUES (?, ?, ?)");
+            PreparedStatement localPreparedStatement = this.connection.prepareStatement("INSERT INTO `actions` (action, player, chest) VALUES (?, ?, ?)");
             localPreparedStatement.setString(1, paramString1);
             localPreparedStatement.setString(2, paramString2);
             localPreparedStatement.setInt(3, -1);
@@ -267,8 +268,7 @@ public class MemDB extends Database {
     public void registerAction(String paramString1, String paramString2, int paramInt) {
         try {
             unregisterAction(paramString1, paramString2);
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("INSERT INTO `actions` (action, player, chest) VALUES (?, ?, ?)");
+            PreparedStatement localPreparedStatement = this.connection.prepareStatement("INSERT INTO `actions` (action, player, chest) VALUES (?, ?, ?)");
             localPreparedStatement.setString(1, paramString1);
             localPreparedStatement.setString(2, paramString2);
             localPreparedStatement.setInt(3, paramInt);
@@ -280,17 +280,17 @@ public class MemDB extends Database {
         }
     }
 
-    public void registerAction(String paramString1, String paramString2, String paramString3) {
+    public void registerAction(String action, String playername, String data) { //TODO this is reg
         try {
-            unregisterAction(paramString1, paramString2);
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("INSERT INTO `actions` (action, player, data) VALUES (?, ?, ?)");
-            localPreparedStatement.setString(1, paramString1);
-            localPreparedStatement.setString(2, paramString2);
-            localPreparedStatement.setString(3, paramString3);
+            unregisterAction(action, playername);
+            PreparedStatement localPreparedStatement = this.connection.prepareStatement("INSERT INTO `actions` (action, player, data) VALUES (?, ?, ?)");
+            localPreparedStatement.setString(1, action);
+            localPreparedStatement.setString(2, playername);
+            localPreparedStatement.setString(3, data);
             localPreparedStatement.executeUpdate();
             localPreparedStatement.close();
             Performance.addMemDBQuery();
+            log.info("Called register "+data);
         } catch (Exception localException) {
             localException.printStackTrace();
         }
@@ -374,8 +374,7 @@ public class MemDB extends Database {
 
     public void unregisterAction(String paramString1, String paramString2) {
         try {
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("DELETE FROM `actions` WHERE `action` = ? AND `player` = ?");
+            PreparedStatement localPreparedStatement = this.connection.prepareStatement("DELETE FROM `actions` WHERE `action` = ? AND `player` = ?");
             localPreparedStatement.setString(1, paramString1);
             localPreparedStatement.setString(2, paramString2);
             localPreparedStatement.executeUpdate();

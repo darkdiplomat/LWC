@@ -24,12 +24,12 @@ public class Command_Admin implements LWC_Command {
 			boolean updated = lwc.getUpdater().checkDist();
 
 			if (updated) {
-				etc.getLoader().reloadPlugin("LWC");
 				player.sendMessage("§2Updated LWC successfully to version: " + lwc.getUpdater().getLatestVersion());
+				etc.getLoader().reloadPlugin("LWC");
 			} 
 			else {
-                player.sendMessage("§4No update found.");
-            }
+				player.sendMessage("§4No update found.");
+			}
 
         } 
 		else if (action.equalsIgnoreCase("limits")) {

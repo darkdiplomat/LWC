@@ -20,7 +20,7 @@ public class LWC extends Plugin {
     private Updater updater;
     private List<LWC_Command> commands;
     private final LWCHook lwch = new LWCHook(this);
-    private boolean reload = false;
+    private boolean reload = false, failure = false;
 
     public boolean canAccessChest(Player player, Entity chest) {
         if (chest == null) {
@@ -106,6 +106,7 @@ public class LWC extends Plugin {
             this.physicalDatabase = null;
             this.memoryDatabase = null;
         } catch (Exception localException) {
+        	logger.info(localException.toString());
         }
     }
 
@@ -131,13 +132,14 @@ public class LWC extends Plugin {
 
             this.updater = new Updater();
             this.updater.check();
-            this.updater.update();
 
-            
             if ((ConfigValues.AUTO_UPDATE.getBool()) && (this.updater.checkDist())) {
             	log("Reloading LWC");
             	reload = true;
             	return;
+            }
+            else{
+            	this.updater.update();
             }
 
             log("LWC config: lwc.properties");
@@ -146,7 +148,7 @@ public class LWC extends Plugin {
             log("DB location: " + this.physicalDatabase.getDatabasePath());
 
             log("Opening sqlite databases");
-
+            
             this.physicalDatabase.connect();
             this.memoryDatabase.connect();
 
@@ -166,7 +168,7 @@ public class LWC extends Plugin {
             log("Error occured while initializing LWC : " + e.getMessage());
             e.printStackTrace();
             log("LWC will now be disabled");
-            etc.getLoader().disablePlugin("LWC");
+            failure = true;
         }
     }
 
@@ -297,7 +299,7 @@ public class LWC extends Plugin {
     }
 
     public void initialize() {
-    	if(!reload){
+    	if(!reload && !failure){
 		    if (!Database.isConnected()) {
 		        return;
 		    }
@@ -318,8 +320,11 @@ public class LWC extends Plugin {
 		    
 		    etc.getLoader().addCustomListener(lwch.AccessCheck);
     	}
-    	else{
+    	else if (!failure){
     		etc.getLoader().reloadPlugin("LWC");
+    	}
+    	else{
+    		etc.getLoader().disablePlugin("LWC");
     	}
     }
 
