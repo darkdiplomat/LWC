@@ -52,8 +52,7 @@ public class LWCListener extends PluginListener {
         return !admin;
     }
 
-    @SuppressWarnings("null")
-	public boolean onBlockDestroy(Player player, Block block) {
+    public boolean onBlockDestroy(Player player, Block block) {
         int worldID = player.getWorld().getType().getId();
 
         if (!isProtectable(block)) {

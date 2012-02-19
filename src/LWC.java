@@ -47,9 +47,9 @@ public class LWC extends Plugin {
         case 0:
             return true;
         case 1:
-            return this.memoryDatabase.hasAccess(player.getName(), chest);
+            return memoryDatabase.hasAccess(player.getName(), chest);
         case 2:
-            PhysDB instance = this.physicalDatabase;
+            PhysDB instance = physicalDatabase;
             if (!player.getName().equalsIgnoreCase(chest.getOwner())){
             	if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) == -1) && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) == -1)){
             		return false;
@@ -62,7 +62,7 @@ public class LWC extends Plugin {
 
     public boolean canAccessChest(Player player, int x, int y, int z) {
     	int worldID = player.getWorld().getType().getId();
-    	return canAccessChest(player, this.physicalDatabase.loadProtectedEntity(worldID, x, y, z));
+    	return canAccessChest(player, physicalDatabase.loadProtectedEntity(worldID, x, y, z));
     }
 
     public boolean canAdminChest(Player player, Entity chest) {
@@ -78,8 +78,7 @@ public class LWC extends Plugin {
         case 0:
             return player.getName().equalsIgnoreCase(chest.getOwner());
         case 1:
-            return (player.getName().equalsIgnoreCase(chest.getOwner()))
-                    && (this.memoryDatabase.hasAccess(player.getName(), chest));
+            return (player.getName().equalsIgnoreCase(chest.getOwner())) && (memoryDatabase.hasAccess(player.getName(), chest));
         case 2:
             PhysDB instance = this.physicalDatabase;
             if (!player.getName().equalsIgnoreCase(chest.getOwner())){
@@ -100,18 +99,22 @@ public class LWC extends Plugin {
         etc.getLoader().removeCustomListener("LWC-AccessCheck");
         etc.getInstance().removeCommand("/lwc");
         try {
-            this.physicalDatabase.connection.close();
-            this.memoryDatabase.connection.close();
-
-            this.physicalDatabase = null;
-            this.memoryDatabase = null;
-        } catch (Exception localException) {
-        	logger.info(localException.toString());
+        	
+        	if(physicalDatabase.connection != null && !physicalDatabase.connection.isClosed()){
+        		physicalDatabase.connection.close();
+        	}
+            if(memoryDatabase.connection != null && !memoryDatabase.connection.isClosed()){
+            	memoryDatabase.connection.close();
+            }
+            
+            physicalDatabase = null;
+            memoryDatabase = null;
+        } catch (Exception E) {
         }
     }
 
     public Updater getUpdater() {
-        return this.updater;
+        return updater;
     }
 
     public void enable() {
@@ -120,9 +123,9 @@ public class LWC extends Plugin {
 
             Performance.init();
 
-            this.commands = new ArrayList<LWC_Command>();
-            this.physicalDatabase = new PhysDB();
-            this.memoryDatabase = new MemDB();
+            commands = new ArrayList<LWC_Command>();
+            physicalDatabase = new PhysDB();
+            memoryDatabase = new MemDB();
 
             log("Binding commands");
             loadCommands();
@@ -130,33 +133,33 @@ public class LWC extends Plugin {
 
             Config.init();
 
-            this.updater = new Updater();
-            this.updater.check();
+            updater = new Updater();
+            updater.check();
 
-            if ((ConfigValues.AUTO_UPDATE.getBool()) && (this.updater.checkDist())) {
+            if ((ConfigValues.AUTO_UPDATE.getBool()) && (updater.checkDist())) {
             	log("Reloading LWC");
             	reload = true;
             	return;
             }
             else{
-            	this.updater.update();
+            	updater.update();
             }
 
             log("LWC config: lwc.properties");
             log("SQLite jar: lib/sqlite.jar");
-            log("SQLite library: lib/" + this.updater.getOSSpecificFileName());
-            log("DB location: " + this.physicalDatabase.getDatabasePath());
+            log("SQLite library: lib/" + updater.getOSSpecificFileName());
+            log("DB location: " + physicalDatabase.getDatabasePath());
 
             log("Opening sqlite databases");
             
-            this.physicalDatabase.connect();
-            this.memoryDatabase.connect();
+            physicalDatabase.connect();
+            memoryDatabase.connect();
 
-            this.physicalDatabase.load();
-            this.memoryDatabase.load();
+            physicalDatabase.load();
+            memoryDatabase.load();
 
-            log("Protections:\t" + this.physicalDatabase.entityCount());
-            log("Limits:\t\t" + this.physicalDatabase.limitCount());
+            log("Protections:\t" + physicalDatabase.entityCount());
+            log("Limits:\t\t" + physicalDatabase.limitCount());
 
             /*if (ConfigValues.CUBOID_SAFE_AREAS.getBool()) {
              *  log("Only allowing chests to be protected in Cuboid-protected zones that DO NOT have PvP toggled!");
@@ -180,7 +183,7 @@ public class LWC extends Plugin {
 
             byte[] raw = md.digest();
             return byteArray2Hex(raw);
-        } catch (Exception localException) {
+        } catch (Exception E) {
         }
         return "";
     }
@@ -190,10 +193,10 @@ public class LWC extends Plugin {
             return false;
         }
 
-        int userLimit = this.physicalDatabase.getUserLimit(player.getName());
+        int userLimit = physicalDatabase.getUserLimit(player.getName());
 
         if (userLimit != -1) {
-            int chests = this.physicalDatabase.getChestCount(player.getName());
+            int chests = physicalDatabase.getChestCount(player.getName());
 
             if (chests >= userLimit) {
                 player.sendMessage("§4You have exceeded the amount of chests you can lock!");
@@ -202,8 +205,7 @@ public class LWC extends Plugin {
         } 
         else {
         	List<String> inheritedGroups = new ArrayList<String>();
-            String groupName = player.getGroups().length > 0 ? player.getGroups()[0] : etc.getInstance()
-                    .getDefaultGroup().Name;
+            String groupName = player.getGroups().length > 0 ? player.getGroups()[0] : etc.getInstance().getDefaultGroup().Name;
 
             inheritedGroups.add(groupName);
             String[] inherited;
@@ -218,7 +220,6 @@ public class LWC extends Plugin {
                 if ((inherited == null) || (inherited.length == 0)) {
                     break;
                 }
-                groupName = inherited[0];
 
                 for (String _groupName : inherited) {
                     _groupName = _groupName.trim();
@@ -231,10 +232,10 @@ public class LWC extends Plugin {
             }
 
             for (String group : inheritedGroups) {
-                int groupLimit = this.physicalDatabase.getGroupLimit(group);
+                int groupLimit = physicalDatabase.getGroupLimit(group);
 
                 if (groupLimit != -1) {
-                    int chests = this.physicalDatabase.getChestCount(player.getName());
+                    int chests = physicalDatabase.getChestCount(player.getName());
 
                     if (chests >= groupLimit) {
                         player.sendMessage("§4You have exceeded the amount of chests you can lock!");
@@ -250,7 +251,7 @@ public class LWC extends Plugin {
     }
 
     public List<LWC_Command> getCommands() {
-        return this.commands;
+        return commands;
     }
 
     public List<ComplexBlock> getEntitySet(World world, int x, int y, int z) {
@@ -281,19 +282,19 @@ public class LWC extends Plugin {
     }
 
     public MemDB getMemoryDatabase() {
-        return this.memoryDatabase;
+        return memoryDatabase;
     }
 
     public PhysDB getPhysicalDatabase() {
-        return this.physicalDatabase;
+        return physicalDatabase;
     }
 
     public int getPlayerDropTransferTarget(String player) {
-        String rawTarget = this.memoryDatabase.getModeData(player, "dropTransfer");
+        String rawTarget = memoryDatabase.getModeData(player, "dropTransfer");
         try {
             int ret = Integer.parseInt(rawTarget.substring(1));
             return ret;
-        } catch (Throwable localThrowable) {
+        } catch (Throwable throwable) {
         }
         return -1;
     }
@@ -306,7 +307,7 @@ public class LWC extends Plugin {
 		
 		    log("Registering hooks");
 		
-		    this.listener = new LWCListener(this);
+		    listener = new LWCListener(this);
 		
 		    registerHook(PluginLoader.Hook.DISCONNECT);
 		    registerHook(PluginLoader.Hook.COMMAND);
@@ -363,12 +364,10 @@ public class LWC extends Plugin {
     }
 
     public boolean isPlayerDropTransferring(String player) {
-        return (this.memoryDatabase.hasMode(player, "dropTransfer"))
-                && (this.memoryDatabase.getModeData(player, "dropTransfer").startsWith("t"));
+        return (this.memoryDatabase.hasMode(player, "dropTransfer")) && (this.memoryDatabase.getModeData(player, "dropTransfer").startsWith("t"));
     }
 
     public void sendFullHelp(Player player) {
-        player.sendMessage(" ");
         player.sendMessage("§2Welcome to LWC, a Protection mod");
         player.sendMessage(" ");
         player.sendMessage("§a/lwc -c - View creation help");
@@ -377,7 +376,6 @@ public class LWC extends Plugin {
         player.sendMessage("§a/lwc -u - Unlock a password protected entity");
         player.sendMessage("§a/lwc -i - View information on a protected Chest or Furnace");
         player.sendMessage("§a/lwc -r <chest|furnace|modes>");
-
         player.sendMessage("§a/lwc -p <persist|droptransfer>");
 
         if (isAdmin(player)) {
