@@ -2,38 +2,41 @@ import com.griefcraft.util.Performance;
 import com.griefcraft.util.StringUtils;
 
 public class Command_Admin implements LWC_Command {
-    public void execute(LWC lwc, Player player, String[] args) {
-        if (args.length < 2) {
-            sendHelp(player);
-            return;
-        }
+	public void execute(LWC lwc, Player player, String[] args) {
+		if (args.length < 2) {
+			sendHelp(player);
+			return;
+		}
 
-        String action = args[1].toLowerCase();
+		String action = args[1].toLowerCase();
 
-        if (action.equals("report")) {
-            Performance.setChestCount(lwc.getPhysicalDatabase().entityCount());
-            Performance.setPlayersOnline(etc.getServer().getPlayerList().size());
+		if (action.equals("report")) {
+			Performance.setChestCount(lwc.getPhysicalDatabase().entityCount());
+			Performance.setPlayersOnline(etc.getServer().getPlayerList().size());
 
-            for (String line : Performance.getGeneratedReport()) {
-                player.sendMessage("ยง2" + line);
-            }
+			for (String line : Performance.getGeneratedReport()) {
+				player.sendMessage("ง2" + line);
+			}
 
             Performance.clear();
-        } else if (action.equals("update")) {
-            boolean updated = lwc.getUpdater().checkDist();
+        } 
+		else if (action.equals("update")) {
+			boolean updated = lwc.getUpdater().checkDist();
 
-            if (updated) {
-                etc.getLoader().reloadPlugin("LWC");
-                player.sendMessage("ยง2Updated LWC successfully to version: " + lwc.getUpdater().getLatestVersion());
-            } else {
-                player.sendMessage("ยง4No update found.");
+			if (updated) {
+				etc.getLoader().reloadPlugin("LWC");
+				player.sendMessage("ง2Updated LWC successfully to version: " + lwc.getUpdater().getLatestVersion());
+			} 
+			else {
+                player.sendMessage("ง4No update found.");
             }
 
-        } else if (action.equalsIgnoreCase("limits")) {
-            if (args.length < 3) {
-                lwc.sendSimpleUsage(player, "/lwc -admin limits <count> <Group/User>");
-                return;
-            }
+        } 
+		else if (action.equalsIgnoreCase("limits")) {
+			if (args.length < 3) {
+				lwc.sendSimpleUsage(player, "/lwc -admin limits <count> <Group/User>");
+				return;
+			}
 
             int limit = Integer.parseInt(args[2]);
 
@@ -47,15 +50,17 @@ public class Command_Admin implements LWC_Command {
 
                 if (limit != -2) {
                     lwc.getPhysicalDatabase().registerProtectionLimit(isGroup ? 0 : 1, limit, entity);
-                    player.sendMessage("ยง2Registered limit of ยง6" + limit + "ยง2" + " chests to the "
-                            + (isGroup ? "group" : "user") + " " + "ยง6" + entity);
-                } else {
+                    player.sendMessage("ง2Registered limit of ง6" + limit + "ง2" + " chests to the "
+                            + (isGroup ? "group" : "user") + " " + "ง6" + entity);
+                }
+                else {
                     lwc.getPhysicalDatabase().unregisterProtectionLimit(isGroup ? 0 : 1, entity);
-                    player.sendMessage("ยง2Unregistered limit for ยง6" + entity);
+                    player.sendMessage("ง2Unregistered limit for ง6" + entity);
                 }
             }
 
-        } else if (action.equals("convert")) {
+        }
+		else if (action.equals("convert")) {
             if (args.length < 2) {
                 lwc.sendSimpleUsage(player, "/lwc -admin convert chestprotect");
                 return;
@@ -67,7 +72,8 @@ public class Command_Admin implements LWC_Command {
                 new CPConverter(player);
             }
 
-        } else if (action.equals("clear")) {
+        } 
+		else if (action.equals("clear")) {
             if (args.length < 3) {
                 lwc.sendSimpleUsage(player, "/lwc -admin clear chests|limits|rights");
                 return;
@@ -77,32 +83,34 @@ public class Command_Admin implements LWC_Command {
             
             if (toClear.equals("protections")) {
                 lwc.getPhysicalDatabase().unregisterProtectionEntities();
-                player.sendMessage("ยง2Removed all protected chests and furnaces");
-            } else if (toClear.equals("rights")) {
+                player.sendMessage("ง2Removed all protected chests and furnaces");
+            }
+            else if (toClear.equals("rights")) {
                 lwc.getPhysicalDatabase().unregisterProtectionRights();
 
-                player.sendMessage("ยง2Removed all protection rights");
-            } else if (toClear.equals("limits")) {
+                player.sendMessage("ง2Removed all protection rights");
+            }
+            else if (toClear.equals("limits")) {
                 lwc.getPhysicalDatabase().unregisterProtectionLimits();
 
-                player.sendMessage("ยง2Removed all protection limits");
+                player.sendMessage("ง2Removed all protection limits");
             }
         }
-    }
+	}
 
-    public void sendHelp(Player player) {
+	public void sendHelp(Player player) {
+		player.sendMessage(" ");
+		player.sendMessage("ง2LWC Administration");
+		player.sendMessage(" ");
+        player.sendMessage("/lwc admin report - ง6Generate a Performance report");
+        player.sendMessage("/lwc admin update - ง6Check for an update (if one, update)");
+        player.sendMessage("/lwc admin convert ง6<chestprotect> - Convert X to LWC");
         player.sendMessage(" ");
-        player.sendMessage("ยง2LWC Administration");
-        player.sendMessage(" ");
-        player.sendMessage("/lwc admin report - ยง6Generate a Performance report");
-        player.sendMessage("/lwc admin update - ยง6Check for an update (if one, update)");
-        player.sendMessage("/lwc admin convert ยง6<chestprotect> - Convert X to LWC");
-        player.sendMessage(" ");
-        player.sendMessage("/lwc admin clear - ยง4PERMANENTLY removes data");
-        player.sendMessage("/lwc admin clear ยง6<protections|rights|limits>");
-    }
+        player.sendMessage("/lwc admin clear - ง4PERMANENTLY removes data");
+        player.sendMessage("/lwc admin clear ง6<protections|rights|limits>");
+	}
 
-    public boolean validate(LWC lwc, Player player, String[] args) {
-        return (lwc.isAdmin(player)) && ((StringUtils.hasFlag(args, "a")) || (StringUtils.hasFlag(args, "admin")));
-    }
+	public boolean validate(LWC lwc, Player player, String[] args) {
+		return (lwc.isAdmin(player)) && ((StringUtils.hasFlag(args, "a")) || (StringUtils.hasFlag(args, "admin")));
+	}
 }

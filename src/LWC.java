@@ -7,21 +7,19 @@ import com.griefcraft.util.Config;
 import com.griefcraft.util.ConfigValues;
 import com.griefcraft.util.Performance;
 import com.griefcraft.util.Updater;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.security.MessageDigest;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 
 public class LWC extends Plugin {
-    private Logger logger = Logger.getLogger(getClass().getSimpleName());
-    private LWCListener listener;
+	private Logger logger = Logger.getLogger(getClass().getSimpleName());
+	private LWCListener listener;
     private PhysDB physicalDatabase;
     private MemDB memoryDatabase;
     private Updater updater;
     private List<LWC_Command> commands;
+    private final LWCHook lwch = new LWCHook(this);
 
     public boolean canAccessChest(Player player, Entity chest) {
         if (chest == null) {
@@ -51,19 +49,19 @@ public class LWC extends Plugin {
             return this.memoryDatabase.hasAccess(player.getName(), chest);
         case 2:
             PhysDB instance = this.physicalDatabase;
-            if (!player.getName().equalsIgnoreCase(chest.getOwner()))
-                if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) == -1)
-                        && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) == -1))
-                    return false;
+            if (!player.getName().equalsIgnoreCase(chest.getOwner())){
+            	if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) == -1) && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) == -1)){
+            		return false;
+            	}
+            }
             return true;
         }
-
         return false;
     }
 
     public boolean canAccessChest(Player player, int x, int y, int z) {
-        int worldID = player.getWorld().getType().getId();
-        return canAccessChest(player, this.physicalDatabase.loadProtectedEntity(worldID, x, y, z));
+    	int worldID = player.getWorld().getType().getId();
+    	return canAccessChest(player, this.physicalDatabase.loadProtectedEntity(worldID, x, y, z));
     }
 
     public boolean canAdminChest(Player player, Entity chest) {
@@ -83,13 +81,13 @@ public class LWC extends Plugin {
                     && (this.memoryDatabase.hasAccess(player.getName(), chest));
         case 2:
             PhysDB instance = this.physicalDatabase;
-            if (!player.getName().equalsIgnoreCase(chest.getOwner()))
-                if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) != 1)
-                        && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) != 1))
-                    return false;
+            if (!player.getName().equalsIgnoreCase(chest.getOwner())){
+            	if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) != 1)  && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) != 1)){
+            		return false;
+                }
+            }
             return true;
         }
-
         return false;
     }
 
@@ -98,6 +96,7 @@ public class LWC extends Plugin {
         Config.getInstance().save();
         Config.destroy();
 
+        etc.getLoader().removeCustomListener("LWC-AccessCheck");
         etc.getInstance().removeCommand("/lwc");
         try {
             this.physicalDatabase.connection.close();
@@ -119,37 +118,32 @@ public class LWC extends Plugin {
 
             Performance.init();
 
-            this.commands = new ArrayList();
+            this.commands = new ArrayList<LWC_Command>();
             this.physicalDatabase = new PhysDB();
             this.memoryDatabase = new MemDB();
 
             log("Binding commands");
             loadCommands();
-            etc.getInstance().addCommand("/lwc", "- Chest/Furnace protection");
+            etc.getInstance().addCommand("/lwc", "- Chest/Furnace/Door protection");
 
             Config.init();
 
             this.updater = new Updater();
-
-            this.updater.check();
-<<<<<<< HEAD
-=======
-            
->>>>>>> Fixed update bug
-            this.updater.update();
+            //this.updater.check();
+            //this.updater.update();
 
             
-            if ((ConfigValues.AUTO_UPDATE.getBool()) && (this.updater.checkDist())) {
-                log("Reloading LWC");
-                etc.getLoader().reloadPlugin("LWC");
-                return;
-            }
-            
+           /* if ((ConfigValues.AUTO_UPDATE.getBool()) && (this.updater.checkDist())) {
+            *	log("Reloading LWC");
+            *	etc.getLoader().reloadPlugin("LWC");
+            *	return;
+            *}
+            */
 
-            log("LWC config:      lwc.properties");
-            log("SQLite jar:      lib/sqlite.jar");
-            log("SQLite library:  lib/" + this.updater.getOSSpecificFileName());
-            log("DB location:     " + this.physicalDatabase.getDatabasePath());
+            log("LWC config: lwc.properties");
+            log("SQLite jar: lib/sqlite.jar");
+            log("SQLite library: lib/" + this.updater.getOSSpecificFileName());
+            log("DB location: " + this.physicalDatabase.getDatabasePath());
 
             log("Opening sqlite databases");
 
@@ -162,10 +156,11 @@ public class LWC extends Plugin {
             log("Protections:\t" + this.physicalDatabase.entityCount());
             log("Limits:\t\t" + this.physicalDatabase.limitCount());
 
-            if (ConfigValues.CUBOID_SAFE_AREAS.getBool()) {
-                log("Only allowing chests to be protected in Cuboid-protected zones that DO NOT have PvP toggled!");
-            }
-
+            /*if (ConfigValues.CUBOID_SAFE_AREAS.getBool()) {
+             *  log("Only allowing chests to be protected in Cuboid-protected zones that DO NOT have PvP toggled!");
+             *}
+			 */
+            
             Config.getInstance().save();
         } catch (Exception e) {
             log("Error occured while initializing LWC : " + e.getMessage());
@@ -199,11 +194,12 @@ public class LWC extends Plugin {
             int chests = this.physicalDatabase.getChestCount(player.getName());
 
             if (chests >= userLimit) {
-                player.sendMessage("ยง4You have exceeded the amount of chests you can lock!");
+                player.sendMessage("ง4You have exceeded the amount of chests you can lock!");
                 return true;
             }
-        } else {
-            List<String> inheritedGroups = new ArrayList<String>();
+        } 
+        else {
+        	List<String> inheritedGroups = new ArrayList<String>();
             String groupName = player.getGroups().length > 0 ? player.getGroups()[0] : etc.getInstance()
                     .getDefaultGroup().Name;
 
@@ -239,7 +235,7 @@ public class LWC extends Plugin {
                     int chests = this.physicalDatabase.getChestCount(player.getName());
 
                     if (chests >= groupLimit) {
-                        player.sendMessage("ยง4You have exceeded the amount of chests you can lock!");
+                        player.sendMessage("ง4You have exceeded the amount of chests you can lock!");
                         return true;
                     }
 
@@ -263,16 +259,17 @@ public class LWC extends Plugin {
         int dev = -1;
         boolean isXDir = true;
 
-        entities = _validateChest(entities, baseBlock);
+        entities = validateChest(entities, baseBlock);
         while (true) {
             // ComplexBlock block = etc.getServer().getComplexBlock(x + (isXDir
             // ? dev : 0), y, z + (isXDir ? 0 : dev));
             ComplexBlock block = world.getComplexBlock(x + (isXDir ? dev : 0), y, z + (isXDir ? 0 : dev));
-            entities = _validateChest(entities, block);
+            entities = validateChest(entities, block);
 
             if (dev == 1) {
-                if (!isXDir)
+                if (!isXDir){
                     break;
+                }
                 isXDir = false;
                 dev = -1;
                 continue;
@@ -319,7 +316,9 @@ public class LWC extends Plugin {
         registerHook(PluginLoader.Hook.OPEN_INVENTORY);
         registerHook(PluginLoader.Hook.EXPLODE);
         registerHook(PluginLoader.Hook.ITEM_DROP);
-        //registerHook(PluginLoader.Hook.BLOCK_RIGHTCLICKED);
+        registerHook(PluginLoader.Hook.BLOCK_RIGHTCLICKED);
+        
+        etc.getLoader().addCustomListener(lwch.AccessCheck);
     }
 
     public boolean isAdmin(Player player) {
@@ -363,78 +362,75 @@ public class LWC extends Plugin {
 
     public void sendFullHelp(Player player) {
         player.sendMessage(" ");
-        player.sendMessage("ยง2Welcome to LWC, a Protection mod");
+        player.sendMessage("ง2Welcome to LWC, a Protection mod");
         player.sendMessage(" ");
-        player.sendMessage("ยงa/lwc -c - View creation help");
-        player.sendMessage("ยงa/lwc -c <public|private|password>");
-        player.sendMessage("ยงa/lwc -m - Modify an existing private protection");
-        player.sendMessage("ยงa/lwc -u - Unlock a password protected entity");
-        player.sendMessage("ยงa/lwc -i  - View information on a protected Chest or Furnace");
-        player.sendMessage("ยงa/lwc -r <chest|furnace|modes>");
+        player.sendMessage("งa/lwc -c - View creation help");
+        player.sendMessage("งa/lwc -c <public|private|password>");
+        player.sendMessage("งa/lwc -m - Modify an existing private protection");
+        player.sendMessage("งa/lwc -u - Unlock a password protected entity");
+        player.sendMessage("งa/lwc -i - View information on a protected Chest or Furnace");
+        player.sendMessage("งa/lwc -r <chest|furnace|modes>");
 
-        player.sendMessage("ยงa/lwc -p <persist|droptransfer>");
+        player.sendMessage("งa/lwc -p <persist|droptransfer>");
 
         if (isAdmin(player)) {
             player.sendMessage("");
-            player.sendMessage("ยง4/lwc admin - Admin functions");
+            player.sendMessage("ง4/lwc admin - Admin functions");
         }
     }
 
-    public boolean isInCuboidSafeZone(Player player) {
-        if (!ConfigValues.CUBOID_SAFE_AREAS.getBool()) {
-            return false;
-        }
-
-        try {
-            Plugin cuboidPlugin = etc.getLoader().getPlugin("CuboidPlugin");
-
-            if (cuboidPlugin == null) {
-                player.sendMessage("CuboidPlugin is not activated");
-                return false;
-            }
-
-            Class cuboidClass = cuboidPlugin.getClass().getClassLoader().loadClass("CuboidAreas");
-
-            Method findCuboidArea = cuboidClass.getMethod("findCuboidArea", new Class[] { Integer.TYPE, Integer.TYPE,
-                    Integer.TYPE });
-
-            Object cuboidC = findCuboidArea.invoke(
-                    null,
-                    new Object[] { Integer.valueOf((int) player.getX()), Integer.valueOf((int) player.getY()),
-                            Integer.valueOf((int) player.getZ()) });
-
-            if (cuboidC != null) {
-                Field pvp = cuboidC.getClass().getDeclaredField("PvP");
-                pvp.setAccessible(true);
-
-                boolean isPvP = pvp.getBoolean(cuboidC);
-
-                return isPvP;
-            }
-
-            Class cuboidPluginClass = cuboidPlugin.getClass().getClassLoader().loadClass("CuboidPlugin");
-
-            Field globalDisablePvP = cuboidPluginClass.getDeclaredField("globalDisablePvP");
-            globalDisablePvP.setAccessible(true);
-
-            boolean isPvP = !globalDisablePvP.getBoolean(null);
-
-            return isPvP;
-        } catch (Exception e) {
-        }
-        return false;
-    }
-
+/*    public boolean isInCuboidSafeZone(Player player) { Disabled!
+ *      if (!ConfigValues.CUBOID_SAFE_AREAS.getBool()) {
+ *          return false;
+ *      }
+ *
+ *      try {
+ *           Plugin cuboidPlugin = etc.getLoader().getPlugin("CuboidPlugin");
+ *
+ *           if (cuboidPlugin == null) {
+ *              player.sendMessage("CuboidPlugin is not activated");
+ *              return false;
+ *          }
+ *
+ *           Class<?> cuboidClass = cuboidPlugin.getClass().getClassLoader().loadClass("CuboidAreas");
+ *
+ *           Method findCuboidArea = cuboidClass.getMethod("findCuboidArea", new Class[] { Integer.TYPE, Integer.TYPE, Integer.TYPE });
+ *
+ *           Object cuboidC = findCuboidArea.invoke(null, new Object[] { Integer.valueOf((int) player.getX()), Integer.valueOf((int) player.getY()), Integer.valueOf((int) player.getZ()) });
+ *
+ *           if (cuboidC != null) {
+ *               Field pvp = cuboidC.getClass().getDeclaredField("PvP");
+ *               pvp.setAccessible(true);
+ *
+ *               boolean isPvP = pvp.getBoolean(cuboidC);
+ *
+ *               return isPvP;
+ *           }
+ *
+ *           Class<?> cuboidPluginClass = cuboidPlugin.getClass().getClassLoader().loadClass("CuboidPlugin");
+ *
+ *           Field globalDisablePvP = cuboidPluginClass.getDeclaredField("globalDisablePvP");
+ *           globalDisablePvP.setAccessible(true);
+ *
+ *           boolean isPvP = !globalDisablePvP.getBoolean(null);
+ *
+ *           return isPvP;
+ *       } catch (Exception e) {
+ *       }
+ *       return false;
+ *   }
+*/
+    
     public void sendPendingRequest(Player player) {
-        player.sendMessage("ยง4You already have a pending chest request.");
-        player.sendMessage("ยง4To remove it, type /lwc free pending");
+        player.sendMessage("ง4You already have a pending chest request.");
+        player.sendMessage("ง4To remove it, type /lwc free pending");
     }
 
     public void sendSimpleUsage(Player player, String command) {
-        player.sendMessage("ยง4Usage:ยง6 " + command);
+        player.sendMessage("ง4Usage:ง6 " + command);
     }
 
-    private List<ComplexBlock> _validateChest(List<ComplexBlock> entities, ComplexBlock block) {
+    private List<ComplexBlock> validateChest(List<ComplexBlock> entities, ComplexBlock block) {
         if (block == null) {
             return entities;
         }

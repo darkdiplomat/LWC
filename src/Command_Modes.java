@@ -1,103 +1,102 @@
- import com.griefcraft.sql.MemDB;
- import com.griefcraft.util.StringUtils;
+import com.griefcraft.util.StringUtils;
  
- public class Command_Modes
-   implements LWC_Command
- {
-   public void execute(LWC lwc, Player player, String[] args)
-   {
-     if (args.length < 2) {
-       lwc.sendSimpleUsage(player, "/lwc -p <persist|droptransfer>");
-       return;
-     }
+public class Command_Modes implements LWC_Command{
+	public void execute(LWC lwc, Player player, String[] args){
+		if (args.length < 2) {
+			lwc.sendSimpleUsage(player, "/lwc -p <persist|droptransfer>");
+			return;
+		}
  
-     String mode = args[1].toLowerCase();
+		String mode = args[1].toLowerCase();
  
-     if (mode.equals("persist")) {
-       if ((!lwc.isAdmin(player)) && (lwc.isModeBlacklisted(mode))) {
-         player.sendMessage("ยง4That mode is currently disabled");
-         return;
-       }
+		if (mode.equals("persist")) {
+			if ((!lwc.isAdmin(player)) && (lwc.isModeBlacklisted(mode))) {
+				player.sendMessage("ง4That mode is currently disabled");
+				return;
+			}
  
-       lwc.getMemoryDatabase().registerMode(player.getName(), mode);
-       player.sendMessage("ยง2Persistance mode activated");
-       player.sendMessage("ยง2Type ยง6/lwc -r modesยง2 to undo (or logout)");
-     }
-     else if (mode.equals("droptransfer")) {
-       mode = "dropTransfer";
+			lwc.getMemoryDatabase().registerMode(player.getName(), mode);
+			player.sendMessage("ง2Persistance mode activated");
+			player.sendMessage("ง2Type ง6/lwc -r modesง2 to undo (or logout)");
+		}
+		else if (mode.equals("droptransfer")) {
+			mode = "dropTransfer";
 
-       if (mode.equals("dropTransfer")) {
-           player.sendMessage("ยง4Mode currently disabled.");
-           return;
-       }
+			if (mode.equals("dropTransfer")) {
+				player.sendMessage("ง4Mode currently disabled.");
+				return;
+			}
 
-       if ((!lwc.isAdmin(player)) && (lwc.isModeBlacklisted(mode))) {
-         player.sendMessage("ยง4That mode is currently disabled");
-         return;
-       }
+			if ((!lwc.isAdmin(player)) && (lwc.isModeBlacklisted(mode))) {
+				player.sendMessage("ง4That mode is currently disabled");
+				return;
+			}
  
-       if (args.length < 3) {
-         player.sendMessage("ยง2LWC Drop Transfer");
-         player.sendMessage("");
-         player.sendMessage("ยงa/lwc -p droptransfer select - Select a chest to drop transfer to");
-         player.sendMessage("ยงa/lwc -p droptransfer on - Turn on drop transferring");
-         player.sendMessage("ยงa/lwc -p droptransfer off - Turn off drop transferring");
-         player.sendMessage("ยงa/lwc -p droptransfer status - Check the status of drop transferring");
-         return;
-       }
+			if (args.length < 3) {
+				player.sendMessage("ง2LWC Drop Transfer");
+				player.sendMessage("");
+				player.sendMessage("งa/lwc -p droptransfer select - Select a chest to drop transfer to");
+				player.sendMessage("งa/lwc -p droptransfer on - Turn on drop transferring");
+				player.sendMessage("งa/lwc -p droptransfer off - Turn off drop transferring");
+				player.sendMessage("งa/lwc -p droptransfer status - Check the status of drop transferring");
+				return;
+			}
  
-       String action = args[2].toLowerCase();
-       String playerName = player.getName();
+			String action = args[2].toLowerCase();
+			String playerName = player.getName();
  
-       if (action.equals("select")) {
-         if (lwc.isPlayerDropTransferring(playerName)) {
-           player.sendMessage("ยง4Please turn off drop transfer before reselecting a chest.");
-           return;
-         }
+			if (action.equals("select")) {
+				if (lwc.isPlayerDropTransferring(playerName)) {
+					player.sendMessage("ง4Please turn off drop transfer before reselecting a chest.");
+					return;
+				}
  
-         lwc.getMemoryDatabase().unregisterMode(playerName, mode);
-         lwc.getMemoryDatabase().registerAction("dropTransferSelect", playerName, "");
+				lwc.getMemoryDatabase().unregisterMode(playerName, mode);
+				lwc.getMemoryDatabase().registerAction("dropTransferSelect", playerName, "");
  
-         player.sendMessage("ยง2Please left-click a registered chest to set as your transfer target.");
-       } else if (action.equals("on")) {
-         int target = lwc.getPlayerDropTransferTarget(playerName);
+				player.sendMessage("ง2Please left-click a registered chest to set as your transfer target.");
+			} 
+			else if (action.equals("on")) {
+				int target = lwc.getPlayerDropTransferTarget(playerName);
  
-         if (target == -1) {
-           player.sendMessage("ยง4Please register a chest before turning drop transfer on.");
-           return;
-         }
+				if (target == -1) {
+					player.sendMessage("ง4Please register a chest before turning drop transfer on.");
+					return;
+				}
  
-         lwc.getMemoryDatabase().unregisterMode(playerName, "dropTransfer");
-         lwc.getMemoryDatabase().registerMode(playerName, "dropTransfer", "t" + target);
-         player.sendMessage("ยง2Drop transfer is now on.");
-         player.sendMessage("ยง2Any items dropped will be transferred to your chest.");
-       } else if (action.equals("off")) {
-         int target = lwc.getPlayerDropTransferTarget(playerName);
+				lwc.getMemoryDatabase().unregisterMode(playerName, "dropTransfer");
+				lwc.getMemoryDatabase().registerMode(playerName, "dropTransfer", "t" + target);
+				player.sendMessage("ง2Drop transfer is now on.");
+				player.sendMessage("ง2Any items dropped will be transferred to your chest.");
+			} 
+			else if (action.equals("off")) {
+				int target = lwc.getPlayerDropTransferTarget(playerName);
  
-         if (target == -1) {
-           player.sendMessage("ยง4Please register a chest before turning drop transfer off.");
-           return;
-         }
+				if (target == -1) {
+					player.sendMessage("ง4Please register a chest before turning drop transfer off.");
+					return;
+				}
  
-         lwc.getMemoryDatabase().unregisterMode(playerName, "dropTransfer");
-         lwc.getMemoryDatabase().registerMode(playerName, "dropTransfer", "f" + target);
+				lwc.getMemoryDatabase().unregisterMode(playerName, "dropTransfer");
+				lwc.getMemoryDatabase().registerMode(playerName, "dropTransfer", "f" + target);
+				
+				player.sendMessage("ง2Drop transfer is now off.");
+			} 
+			else if (action.equals("status")) {
+				if (lwc.getPlayerDropTransferTarget(playerName) == -1) {
+					player.sendMessage("ง2You have not registered a drop transfer target.");
+				}
+				else if (lwc.isPlayerDropTransferring(playerName)){
+					player.sendMessage("ง2Drop transfer is currently active.");
+				}
+				else{
+					player.sendMessage("ง2Drop transfer is currently inactive.");
+				}
+			}
+		}
+	}
  
-         player.sendMessage("ยง2Drop transfer is now off.");
-       } else if (action.equals("status")) {
-         if (lwc.getPlayerDropTransferTarget(playerName) == -1) {
-           player.sendMessage("ยง2You have not registered a drop transfer target.");
-         }
-         else if (lwc.isPlayerDropTransferring(playerName))
-           player.sendMessage("ยง2Drop transfer is currently active.");
-         else
-           player.sendMessage("ยง2Drop transfer is currently inactive.");
-       }
-     }
-   }
- 
-   public boolean validate(LWC lwc, Player player, String[] args)
-   {
-     return StringUtils.hasFlag(args, "p");
-   }
- }
-
+	public boolean validate(LWC lwc, Player player, String[] args){
+		return StringUtils.hasFlag(args, "p");
+	}
+}

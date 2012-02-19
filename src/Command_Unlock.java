@@ -1,52 +1,52 @@
 import com.griefcraft.model.Entity;
-import com.griefcraft.sql.MemDB;
-import com.griefcraft.sql.PhysDB;
 import com.griefcraft.util.StringUtils;
 
 public class Command_Unlock implements LWC_Command {
-    public void execute(LWC lwc, Player player, String[] args) {
-        if (args.length < 1) {
-            player.sendMessage("ยง4Usage: ยง6/lwc -u <Password>");
-            return;
-        }
+	public void execute(LWC lwc, Player player, String[] args) {
+		if (args.length < 1) {
+			player.sendMessage("ง4Usage: ง6/lwc -u <Password>");
+			return;
+		}
 
-        String password = StringUtils.join(args, 1);
-        password = lwc.encrypt(password);
+		String password = StringUtils.join(args, 1);
+		password = lwc.encrypt(password);
 
-        if (!lwc.getMemoryDatabase().hasPendingUnlock(player.getName())) {
-            player.sendMessage("ยง4Nothing selected. Open a locked Chest/Furnace first.");
-            return;
-        }
+		if (!lwc.getMemoryDatabase().hasPendingUnlock(player.getName())) {
+			player.sendMessage("ง4Nothing selected. Open a locked Chest/Furnace first.");
+			return;
+		}
 
-        int chestID = lwc.getMemoryDatabase().getUnlockID(player.getName());
+		int chestID = lwc.getMemoryDatabase().getUnlockID(player.getName());
+		
+		if (chestID == -1) {
+			player.sendMessage("ง4[lwc] Internal error. [ulock]");
+			return;
+		}
 
-        if (chestID == -1) {
-            player.sendMessage("ยง4[lwc] Internal error. [ulock]");
-            return;
-        }
+		Entity entity = lwc.getPhysicalDatabase().loadProtectedEntity(chestID);
 
-        Entity entity = lwc.getPhysicalDatabase().loadProtectedEntity(chestID);
+		if (entity.getType() != 1) {
+			player.sendMessage("ง4That is not password protected!");
+			return;
+		}
 
-        if (entity.getType() != 1) {
-            player.sendMessage("ยง4That is not password protected!");
-            return;
-        }
+		if (entity.getPassword().equals(password)) {
+			player.sendMessage("ง2Password accepted.");
+			lwc.getMemoryDatabase().unregisterUnlock(player.getName());
+			lwc.getMemoryDatabase().registerPlayer(player.getName(), chestID);
 
-        if (entity.getPassword().equals(password)) {
-            player.sendMessage("ยง2Password accepted.");
-            lwc.getMemoryDatabase().unregisterUnlock(player.getName());
-            lwc.getMemoryDatabase().registerPlayer(player.getName(), chestID);
+			for (ComplexBlock entity_ : lwc.getEntitySet(player.getWorld(), entity.getX(), entity.getY(), entity.getZ())){
+				if (entity_ != null){
+					entity_.update();
+				}
+			}
+		} 
+		else {
+			player.sendMessage("ง4Invalid password.");
+		}
+	}
 
-            for (ComplexBlock entity_ : lwc
-                    .getEntitySet(player.getWorld(), entity.getX(), entity.getY(), entity.getZ()))
-                if (entity_ != null)
-                    entity_.update();
-        } else {
-            player.sendMessage("ยง4Invalid password.");
-        }
-    }
-
-    public boolean validate(LWC lwc, Player player, String[] args) {
-        return (StringUtils.hasFlag(args, "u")) || (StringUtils.hasFlag(args, "unlock"));
-    }
+	public boolean validate(LWC lwc, Player player, String[] args) {
+		return (StringUtils.hasFlag(args, "u")) || (StringUtils.hasFlag(args, "unlock"));
+	}
 }

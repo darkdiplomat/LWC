@@ -2,295 +2,271 @@ import com.griefcraft.model.Action;
 import com.griefcraft.model.Entity;
 import com.griefcraft.sql.MemDB;
 import com.griefcraft.sql.PhysDB;
-import com.griefcraft.util.ConfigValues;
-import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
 public class LWCListener extends PluginListener {
     private final LWC lwc;
-    private static final int BLAST_RADIUS = 4;
     public boolean debugMode = false;
     private PhysDB physicalDatabase;
     private MemDB memoryDatabase;
 
-    public LWCListener(LWC paramLWC) {
-        this.lwc = paramLWC;
-        this.physicalDatabase = paramLWC.getPhysicalDatabase();
-        this.memoryDatabase = paramLWC.getMemoryDatabase();
+    public LWCListener(LWC lwc) {
+        this.lwc = lwc;
+        this.physicalDatabase = lwc.getPhysicalDatabase();
+        this.memoryDatabase = lwc.getMemoryDatabase();
     }
 
-    public boolean onBlockBreak(Player paramPlayer, Block paramBlock) {
+    public boolean onBlockBreak(Player player, Block block) {
 
-        if (!isProtectable(paramBlock)) {
+        if (!isProtectable(block)) {
             return false;
         }
-        int worldID = paramPlayer.getWorld().getType().getId();
+        int worldID = player.getWorld().getType().getId();
 
-        List<ComplexBlock> localList = this.lwc.getEntitySet(paramPlayer.getWorld(), paramBlock.getX(),
-                paramBlock.getY(), paramBlock.getZ());
-        boolean bool1 = true;
-        boolean bool2 = true;
-        Entity localEntity = null;
+        List<ComplexBlock> cblist = this.lwc.getEntitySet(player.getWorld(), block.getX(), block.getY(), block.getZ());
+        boolean access = true;
+        boolean admin = true;
+        Entity entity = null;
 
-        for (ComplexBlock localComplexBlock : localList) {
-            if (localComplexBlock == null) {
+        for (ComplexBlock cb : cblist) {
+            if (cb == null) {
                 continue;
             }
-            Entity entity = this.physicalDatabase.loadProtectedEntity(worldID, localComplexBlock.getX(),
-                    localComplexBlock.getY(), localComplexBlock.getZ());
+            entity = this.physicalDatabase.loadProtectedEntity(worldID, cb.getX(), cb.getY(), cb.getZ());
 
             if (entity == null) {
                 continue;
             }
-            localEntity = entity;
-            bool1 = this.lwc.canAccessChest(paramPlayer, localEntity);
-            bool2 = this.lwc.canAdminChest(paramPlayer, localEntity);
+            
+            access = this.lwc.canAccessChest(player, entity);
+            admin = this.lwc.canAdminChest(player, entity);
         }
 
-        if ((bool1) && (localEntity != null) && (bool2)) {
-            this.physicalDatabase.unregisterProtectedEntity(worldID, localEntity.getX(), localEntity.getY(),
-                    localEntity.getZ());
-            this.physicalDatabase.unregisterProtectionRights(localEntity.getID());
-            paramPlayer.sendMessage("Â§4Chest unregistered.");
+        if ((access) && (entity != null) && (admin)) {
+            this.physicalDatabase.unregisterProtectedEntity(worldID, entity.getX(), entity.getY(), entity.getZ());
+            this.physicalDatabase.unregisterProtectionRights(entity.getID());
+            player.sendMessage("§4Chest unregistered.");
         }
 
-        return !bool2;
+        return !admin;
     }
 
-    public boolean onBlockDestroy(Player paramPlayer, Block paramBlock) {
-        int worldID = paramPlayer.getWorld().getType().getId();
+    @SuppressWarnings("null")
+	public boolean onBlockDestroy(Player player, Block block) {
+        int worldID = player.getWorld().getType().getId();
 
-        if (!isProtectable(paramBlock)) {
+        if (!isProtectable(block)) {
             return false;
         }
-        boolean bool1 = true;
-        Entity localEntity = null;
+        boolean access = true;
+        Entity entity = null;
         int i = 1;
-        List<ComplexBlock> localList = null;
+        List<ComplexBlock> cblist = null;
+        Iterator<ComplexBlock> iBlocks = null;
 
-        if (isComplexBlock(paramBlock)) {
-            localList = this.lwc.getEntitySet(paramPlayer.getWorld(), paramBlock.getX(),
-                    paramBlock.getY(), paramBlock.getZ());
+        if (isComplexBlock(block)) {
+            cblist = this.lwc.getEntitySet(player.getWorld(), block.getX(), block.getY(), block.getZ());
 
-            for (Iterator<ComplexBlock> iBlocks = localList.iterator(); iBlocks.hasNext();) {
-                ComplexBlock localComplexBlock = iBlocks.next();
-                if (localComplexBlock == null) {
+            for (iBlocks = cblist.iterator(); iBlocks.hasNext();) {
+                ComplexBlock cb = iBlocks.next();
+                if (cb == null) {
                     continue;
                 }
-                Entity entity = this.physicalDatabase.loadProtectedEntity(worldID, localComplexBlock.getX(),
-                        localComplexBlock.getY(), localComplexBlock.getZ());
+                entity = this.physicalDatabase.loadProtectedEntity(worldID, cb.getX(), cb.getY(), cb.getZ());
                 if (entity == null) {
                     continue;
                 }
-                localEntity = entity;
-                bool1 = this.lwc.canAccessChest(paramPlayer, localEntity);
+                
+                access = this.lwc.canAccessChest(player, entity);
                 i = 0;
             }
-        } else if (paramBlock.getType() == 64){
-            if (isUpperDoor(paramBlock)) {
-                paramBlock = paramBlock.getWorld().getBlockAt(paramBlock.getX(), paramBlock.getY()-1, paramBlock.getZ());
+        } else if (block.getType() == 64){
+            if (isUpperDoor(block)) {
+                block = block.getWorld().getBlockAt(block.getX(), block.getY()-1, block.getZ());
             }
-            localEntity = this.physicalDatabase.loadProtectedEntity(worldID, paramBlock.getX(), paramBlock.getY(), paramBlock.getZ());
-            bool1 = this.lwc.canAccessChest(paramPlayer, localEntity);
+            entity = this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ());
+            access = this.lwc.canAccessChest(player, entity);
         } else {
             // Only ComplexBlocks or Doors
             return false;
         }
 
-        if (paramBlock.getStatus() != 0) {
-            return !bool1;
+        if (block.getStatus() != 0) {
+            return !access;
         }
-        String name = paramPlayer.getName();
-        List<String> localObject1 = this.memoryDatabase.getActions(name);
+        String name = player.getName();
+        List<String> acts = this.memoryDatabase.getActions(name);
 
-        boolean op_free = localObject1.contains("free");
-        boolean op_info = localObject1.contains("info");
-        boolean op_create = localObject1.contains("create");
-        boolean op_modify = localObject1.contains("modify");
-        boolean op_drop = localObject1.contains("dropTransferSelect");
-        Object localObject2;
-        Object localObject3;
-        Action localAction;
+        boolean op_free = acts.contains("free");
+        boolean op_info = acts.contains("info");
+        boolean op_create = acts.contains("create");
+        boolean op_modify = acts.contains("modify");
+        boolean op_drop = acts.contains("dropTransferSelect");
+        List<String> sess;
+        Iterator<String> iterator = null;
+        Action action;
         // Object localObject5;
         int n;
         int i1;
-        if (localEntity != null) {
+        if (entity != null) {
             i = 0;
 
             if (op_info) {
                 String str1 = "";
 
-                if (localEntity.getType() == 1) {
-                    localObject2 = this.memoryDatabase.getSessionUsers(localEntity.getID());
+                if (entity.getType() == 1) {
+                    sess = this.memoryDatabase.getSessionUsers(entity.getID());
 
-                    for (localObject3 = ((List) localObject2).iterator(); ((Iterator) localObject3).hasNext();) {
-                        String str2 = (String) ((Iterator) localObject3).next();
+                    for (iterator = sess.iterator(); iterator.hasNext();) {
+                        String str2 = iterator.next();
                         Player localPlayer = etc.getServer().getPlayer(str2);
 
                         if (localPlayer == null) {
                             continue;
                         }
                         str1 = new StringBuilder().append(str1).append(localPlayer.getColor()).append(str2)
-                                .append("Â§f").append(", ").toString();
+                                .append("§f").append(", ").toString();
                     }
 
-                    if (((List) localObject2).size() > 0) {
+                    if (sess.size() > 0) {
                         str1 = str1.substring(0, str1.length() - 4);
                     }
                 }
 
-                localObject3 = " ";
+                String str = " ";
 
-                switch (localEntity.getType()) {
+                switch (entity.getType()) {
                 case 0:
-                    localObject3 = "Public";
+                    str = "Public";
                     break;
                 case 1:
-                    localObject3 = "Password";
+                    str = "Password";
                     break;
                 case 2:
-                    localObject3 = "Private";
+                    str = "Private";
                 }
 
-                boolean bool8 = this.lwc.canAdminChest(paramPlayer, localEntity);
+                boolean admin = this.lwc.canAdminChest(player, entity);
 
-                if (bool8) {
-                    paramPlayer.sendMessage(new StringBuilder().append("Â§2ID: Â§6").append(localEntity.getID())
-                            .toString());
+                if (admin) {
+                    player.sendMessage(new StringBuilder().append("§2ID: §6").append(entity.getID()).toString());
                 }
 
-                paramPlayer.sendMessage(new StringBuilder().append("Â§2Type: Â§6").append((String) localObject3)
-                        .toString());
-                paramPlayer.sendMessage(new StringBuilder().append("Â§2Owner: Â§6").append(localEntity.getOwner())
-                        .toString());
+                player.sendMessage(new StringBuilder().append("§2Type: §6").append(str).toString());
+                player.sendMessage(new StringBuilder().append("§2Owner: §6").append(entity.getOwner()).toString());
 
-                if ((localEntity.getType() == 1) && (bool8)) {
-                    paramPlayer.sendMessage(new StringBuilder().append("Â§2Authed players: ").append(str1).toString());
+                if ((entity.getType() == 1) && (admin)) {
+                    player.sendMessage(new StringBuilder().append("§2Authed players: ").append(str1).toString());
                 }
 
-                if (bool8) {
-                    String world = com.griefcraft.util.StringUtils.capitalizeFirstLetter(localEntity.getWorldName());
-                    paramPlayer.sendMessage(new StringBuilder().append("Â§2World: Â§6").append(world).toString());
-                    paramPlayer.sendMessage(new StringBuilder().append("Â§2Location: Â§6{").append(localEntity.getX())
-                            .append(", ").append(localEntity.getY()).append(", ").append(localEntity.getZ())
-                            .append("}").toString());
-                    paramPlayer.sendMessage(new StringBuilder().append("Â§2Date created: Â§6")
-                            .append(localEntity.getDate()).toString());
+                if (admin) {
+                    String world = com.griefcraft.util.StringUtils.capitalizeFirstLetter(entity.getWorldName());
+                    player.sendMessage(new StringBuilder().append("§2World: §6").append(world).toString());
+                    player.sendMessage(new StringBuilder().append("§2Location: §6{").append(entity.getX()).append(", ").append(entity.getY()).append(", ").append(entity.getZ()).append("}").toString());
+                    player.sendMessage(new StringBuilder().append("§2Date created: §6").append(entity.getDate()).toString());
                 }
 
-                if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                    this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                if (this.lwc.notInPersistentMode(player.getName())) {
+                	this.memoryDatabase.unregisterAllActions(player.getName());
                 }
                 return false;
             }
             if (op_drop) {
-                boolean bool7 = this.lwc.canAccessChest(paramPlayer, localEntity);
-                if (!bool7) {
-                    paramPlayer
-                            .sendMessage("Â§4You cannot use a chest that you cannot access as a drop transfer target.");
-                    paramPlayer.sendMessage("Â§4If this is a passworded chest, please unlock it before retrying.");
-                    paramPlayer.sendMessage("Â§4Use \"/lwc droptransfer select\" to try again.");
+                access = this.lwc.canAccessChest(player, entity);
+                if (!access) {
+                    player.sendMessage("§4You cannot use a chest that you cannot access as a drop transfer target.");
+                    player.sendMessage("§4If this is a passworded chest, please unlock it before retrying.");
+                    player.sendMessage("§4Use \"/lwc droptransfer select\" to try again.");
                 } else {
-                    if (localList == null) {
-                        paramPlayer.sendMessage("Â§4You need to select a chest as the Drop Transfer target!");
-                        this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
-                        return false;                        
+                    if (cblist == null) {
+                        player.sendMessage("§4You need to select a chest as the Drop Transfer target!");
+                        this.memoryDatabase.unregisterAllActions(player.getName());
+                        return false;
                     }
-                    for (localObject2 = localList.iterator(); ((Iterator) localObject2).hasNext();) {
-                        localObject3 = (ComplexBlock) ((Iterator) localObject2).next();
-                        if ((!(localObject3 instanceof Chest)) && (!(localObject3 instanceof DoubleChest))) {
-                            paramPlayer.sendMessage("Â§4You need to select a chest as the Drop Transfer target!");
-                            this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                    for (iBlocks = cblist.iterator();  iterator.hasNext();) {
+                        ComplexBlock cb = iBlocks.next();
+                        if ((!(cb instanceof Chest)) && (!(cb instanceof DoubleChest))) {
+                            player.sendMessage("§4You need to select a chest as the Drop Transfer target!");
+                            this.memoryDatabase.unregisterAllActions(player.getName());
                             return false;
                         }
                     }
 
-                    this.memoryDatabase.registerMode(paramPlayer.getName(), "dropTransfer",
-                            new StringBuilder().append("f").append(localEntity.getID()).toString());
-                    paramPlayer.sendMessage("Â§2Successfully registered chest as drop transfer target.");
+                    this.memoryDatabase.registerMode(player.getName(), "dropTransfer", new StringBuilder().append("f").append(entity.getID()).toString());
+                    player.sendMessage("§2Successfully registered chest as drop transfer target.");
                 }
-                this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                this.memoryDatabase.unregisterAllActions(player.getName());
 
                 return false;
             }
             if (op_free) {
-                if ((this.lwc.isAdmin(paramPlayer)) || (localEntity.getOwner().equals(paramPlayer.getName()))) {
-                    paramPlayer.sendMessage("Â§aRemoved lock on the chest succesfully!");
-                    this.physicalDatabase.unregisterProtectedEntity(worldID, localEntity.getX(), localEntity.getY(),
-                            localEntity.getZ());
-                    this.physicalDatabase.unregisterProtectionRights(localEntity.getID());
-                    if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                        this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                if ((this.lwc.isAdmin(player)) || (entity.getOwner().equals(player.getName()))) {
+                    player.sendMessage("§aRemoved lock on the chest succesfully!");
+                    this.physicalDatabase.unregisterProtectedEntity(worldID, entity.getX(), entity.getY(), entity.getZ());
+                    this.physicalDatabase.unregisterProtectionRights(entity.getID());
+                    if (this.lwc.notInPersistentMode(player.getName())) {
+                        this.memoryDatabase.unregisterAllActions(player.getName());
                     }
                     return false;
                 }
-                paramPlayer.sendMessage("Â§4You do not own that chest!");
-                if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                    this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                player.sendMessage("§4You do not own that chest!");
+                if (this.lwc.notInPersistentMode(player.getName())) {
+                    this.memoryDatabase.unregisterAllActions(player.getName());
                 }
                 return true;
             }
             if (op_modify) {
-                if (this.lwc.canAdminChest(paramPlayer, localEntity)) {
-                    localAction = this.memoryDatabase.getAction("modify", paramPlayer.getName());
+                if (this.lwc.canAdminChest(player, entity)) {
+                    action = this.memoryDatabase.getAction("modify", player.getName());
 
-                    localObject2 = localAction.getData();
+                    String str3 = action.getData();
                     String[] splits = { "" };
-                    localObject3 = new String[0];
 
-                    if (((String) localObject2).length() > 0) {
-                        splits = ((String) localObject2).split(" ");
+                    if (str3.length() > 0) {
+                        splits = str3.split(" ");
                     }
 
-                    if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                        this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                    if (this.lwc.notInPersistentMode(player.getName())) {
+                        this.memoryDatabase.unregisterAllActions(player.getName());
                     }
 
-                    for (String localObject5 : splits) {
+                    for (String str : splits) {
                         int m = 0;
                         n = 0;
                         i1 = 1;
 
-                        if (((String) localObject5).startsWith("-")) {
+                        if (str.startsWith("-")) {
                             m = 1;
-                            localObject5 = ((String) localObject5).substring(1);
+                            str = str.substring(1);
                         }
 
-                        if (((String) localObject5).startsWith("@")) {
+                        if (str.startsWith("@")) {
                             n = 1;
-                            localObject5 = ((String) localObject5).substring(1);
+                            str = str.substring(1);
                         }
 
-                        if (((String) localObject5).toLowerCase().startsWith("g:")) {
+                        if (str.toLowerCase().startsWith("g:")) {
                             i1 = 0;
-                            localObject5 = ((String) localObject5).substring(2);
+                            str = str.substring(2);
                         }
 
-                        int i2 = this.physicalDatabase.loadProtectedEntity(worldID, paramBlock.getX(),
-                                paramBlock.getY(), paramBlock.getZ()).getID();
+                        int i2 = this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ()).getID();
 
                         if (m == 0) {
-                            this.physicalDatabase.unregisterProtectionRights(i2, (String) localObject5);
-                            this.physicalDatabase.registerProtectionRights(i2, (String) localObject5, n != 0 ? 1 : 0,
-                                    i1);
-                            paramPlayer.sendMessage(new StringBuilder().append("Â§aRegistered rights for Â§6")
-                                    .append((String) localObject5).append("Â§2").append(" ")
-                                    .append(n != 0 ? "[Â§4ADMINÂ§6]" : "").append(" [")
-                                    .append(i1 == 1 ? "Player" : "Group").append("]").toString());
+                            this.physicalDatabase.unregisterProtectionRights(i2, str);
+                            this.physicalDatabase.registerProtectionRights(i2, str, n != 0 ? 1 : 0, i1);
+                            player.sendMessage(new StringBuilder().append("§aRegistered rights for §6").append(str).append("§2").append(" ").append(n != 0 ? "[§4ADMIN§6]" : "").append(" [").append(i1 == 1 ? "Player" : "Group").append("]").toString());
                         } else {
-                            this.physicalDatabase.unregisterProtectionRights(i2, (String) localObject5);
-                            paramPlayer.sendMessage(new StringBuilder().append("Â§aRemoved rights for Â§6")
-                                    .append((String) localObject5).append("Â§2").append(" [")
-                                    .append(i1 == 1 ? "Player" : "Group").append("]").toString());
+                            this.physicalDatabase.unregisterProtectionRights(i2, str);
+                            player.sendMessage(new StringBuilder().append("§aRemoved rights for §6").append(str).append("§2").append(" [").append(i1 == 1 ? "Player" : "Group").append("]").toString());
                         }
                     }
-
                     return false;
                 }
-                paramPlayer.sendMessage("Â§4You do not own that chest!");
-                if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                    this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+                player.sendMessage("§4You do not own that chest!");
+                if (this.lwc.notInPersistentMode(player.getName())) {
+                    this.memoryDatabase.unregisterAllActions(player.getName());
                 }
                 return true;
             }
@@ -298,38 +274,38 @@ public class LWCListener extends PluginListener {
         }
 
         if (op_drop) {
-            paramPlayer.sendMessage("Â§4Cannot select unregistered chest as drop transfer target.");
-            paramPlayer.sendMessage("Â§4Use \"/lwc droptransfer select\" to try again.");
-            this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+            player.sendMessage("§4Cannot select unregistered chest as drop transfer target.");
+            player.sendMessage("§4Use \"/lwc droptransfer select\" to try again.");
+            this.memoryDatabase.unregisterAllActions(player.getName());
 
             return false;
         }
 
         if ((op_info) || (op_free)) {
-            paramPlayer.sendMessage("Â§4Chest is unregistered");
-            if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+            player.sendMessage("§4Chest is unregistered");
+            if (this.lwc.notInPersistentMode(player.getName())) {
+                this.memoryDatabase.unregisterAllActions(player.getName());
             }
             return false;
         }
 
         if (((op_create) || (op_modify)) && (i == 0)) {
-            if (!this.lwc.canAdminChest(paramPlayer, localEntity))
-                paramPlayer.sendMessage("Â§4You do not own that chest!");
+            if (!this.lwc.canAdminChest(player, entity))
+                player.sendMessage("§4You do not own that chest!");
             else {
-                paramPlayer.sendMessage("Â§4You have already registered that chest!");
+                player.sendMessage("§4You have already registered that chest!");
             }
-            if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+            if (this.lwc.notInPersistentMode(player.getName())) {
+                this.memoryDatabase.unregisterAllActions(player.getName());
             }
             return true;
         }
 
         if ((i != 0) && (op_create)) {
-            localAction = this.memoryDatabase.getAction("create", paramPlayer.getName());
+            action = this.memoryDatabase.getAction("create", player.getName());
 
-            localObject2 = localAction.getData();
-            String[] split = ((String) localObject2).split(" ");
+            String str = action.getData();
+            String[] split = str.split(" ");
             String cmd = split[0].toLowerCase();
             String str3 = "";
 
@@ -339,48 +315,45 @@ public class LWCListener extends PluginListener {
                 }
             }
 
-            if (this.lwc.enforceChestLimits(paramPlayer)) {
-                if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                    this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+            if (this.lwc.enforceChestLimits(player)) {
+                if (this.lwc.notInPersistentMode(player.getName())) {
+                    this.memoryDatabase.unregisterAllActions(player.getName());
                 }
                 return false;
             }
 
-            if ((!this.lwc.isAdmin(paramPlayer)) && (this.lwc.isInCuboidSafeZone(paramPlayer))) {
-                paramPlayer.sendMessage("Â§4You need to be in a Cuboid-protected safe zone to do that!");
-                this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
-                return false;
-            }
-
+        /*  if ((!this.lwc.isAdmin(player)) && (this.lwc.isInCuboidSafeZone(player))) {
+         *      player.sendMessage("§4You need to be in a Cuboid-protected safe zone to do that!");
+         *      this.memoryDatabase.unregisterAllActions(player.getName());
+         *      return false;
+         *	}
+	     */
+            
             if (cmd.equals("public")) {
-                this.physicalDatabase.registerProtectedEntity(worldID, 0, paramPlayer.getName(), "", paramBlock.getX(),
-                        paramBlock.getY(), paramBlock.getZ());
-                paramPlayer.sendMessage("Â§2Created public protection successfully");
+                this.physicalDatabase.registerProtectedEntity(worldID, 0, player.getName(), "", block.getX(), block.getY(), block.getZ());
+                player.sendMessage("§2Created public protection successfully");
             } else {
                 String str4;
-                Object localObject6;
+                ComplexBlock cb;
                 if (cmd.equals("password")) {
-                    str4 = localAction.getData().substring("password ".length());
+                    str4 = action.getData().substring("password ".length());
                     str4 = this.lwc.encrypt(str4);
 
-                    this.physicalDatabase.registerProtectedEntity(worldID, 1, paramPlayer.getName(), str4,
-                            paramBlock.getX(), paramBlock.getY(), paramBlock.getZ());
-                    this.memoryDatabase.registerPlayer(paramPlayer.getName(), this.physicalDatabase
-                            .loadProtectedEntity(worldID, paramBlock.getX(), paramBlock.getY(), paramBlock.getZ())
-                            .getID());
-                    paramPlayer.sendMessage("Â§2Created password protection successfully");
-                    paramPlayer.sendMessage("Â§aFor convenience, you don't have to enter your password until");
-                    paramPlayer.sendMessage("Â§ayou next log in");
+                    this.physicalDatabase.registerProtectedEntity(worldID, 1, player.getName(), str4, block.getX(), block.getY(), block.getZ());
+                    this.memoryDatabase.registerPlayer(player.getName(), this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ()).getID());
+                    player.sendMessage("§2Created password protection successfully");
+                    player.sendMessage("§aFor convenience, you don't have to enter your password until");
+                    player.sendMessage("§ayou next log in");
 
-                    if (localList != null) {
-                    for (Iterator it = localList.iterator(); it.hasNext();) {
-                        localObject6 = (ComplexBlock) it.next();
-                        if (localObject6 != null) {
-                            ((ComplexBlock) localObject6).update();
+                    if (action != null) {
+                    for (Iterator<ComplexBlock> it = cblist.iterator(); it.hasNext();) {
+                        cb = it.next();
+                        if (cb != null) {
+                            cb.update();
                         }
                     }}
                 } else if (cmd.equals("private")) {
-                    str4 = localAction.getData();
+                    str4 = action.getData();
                     String[] split2 = new String[0];
 
                     if (str4.length() > "private ".length()) {
@@ -388,10 +361,9 @@ public class LWCListener extends PluginListener {
                         split2 = str4.split(" ");
                     }
 
-                    this.physicalDatabase.registerProtectedEntity(worldID, 2, paramPlayer.getName(), "",
-                            paramBlock.getX(), paramBlock.getY(), paramBlock.getZ());
+                    this.physicalDatabase.registerProtectedEntity(worldID, 2, player.getName(), "", block.getX(), block.getY(), block.getZ());
 
-                    paramPlayer.sendMessage("Â§2Created private protection successfully");
+                    player.sendMessage("§2Created private protection successfully");
 
                     for (String str5 : split2) {
                         int i3 = 0;
@@ -407,21 +379,17 @@ public class LWCListener extends PluginListener {
                             str5 = str5.substring(2);
                         }
 
-                        this.physicalDatabase.registerProtectionRights(
-                                this.physicalDatabase.loadProtectedEntity(worldID, paramBlock.getX(),
-                                        paramBlock.getY(), paramBlock.getZ()).getID(), str5, i3 != 0 ? 1 : 0, i4);
-                        paramPlayer.sendMessage(new StringBuilder().append("Â§aRegistered rights for Â§6").append(str5)
-                                .append(": ").append(i3 != 0 ? "[Â§4ADMINÂ§6]" : "").append(" [")
-                                .append(i4 == 1 ? "Player" : "Group").append("]").toString());
+                        this.physicalDatabase.registerProtectionRights(this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ()).getID(), str5, i3 != 0 ? 1 : 0, i4);
+                        player.sendMessage(new StringBuilder().append("§aRegistered rights for §6").append(str5).append(": ").append(i3 != 0 ? "[§4ADMIN§6]" : "").append(" [").append(i4 == 1 ? "Player" : "Group").append("]").toString());
                     }
                 }
             }
-            if (this.lwc.notInPersistentMode(paramPlayer.getName())) {
-                this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+            if (this.lwc.notInPersistentMode(player.getName())) {
+                this.memoryDatabase.unregisterAllActions(player.getName());
             }
         }
 
-        return !bool1;
+        return !access;
     }
 
     private boolean isUpperDoor(Block b) {
@@ -429,42 +397,41 @@ public class LWCListener extends PluginListener {
         return ((data & 8) == 8);
     }
 
-    public boolean onCommand(Player paramPlayer, String[] paramArrayOfString) {
-        String str1 = paramArrayOfString[0].substring(1);
+    public boolean onCommand(Player player, String[] args) {
+        String str1 = args[0].substring(1);
         String str2 = "";
-        String[] arrayOfString = paramArrayOfString.length > 1 ? new String[paramArrayOfString.length - 1]
+        String[] str = args.length > 1 ? new String[args.length - 1]
                 : new String[0];
 
-        if (paramArrayOfString.length > 1) {
-            for (int i = 1; i < paramArrayOfString.length; i++) {
-                paramArrayOfString[i] = paramArrayOfString[i].trim();
+        if (args.length > 1) {
+            for (int i = 1; i < args.length; i++) {
+                args[i] = args[i].trim();
 
-                if (paramArrayOfString[i].isEmpty()) {
+                if (args[i].isEmpty()) {
                     continue;
                 }
-                arrayOfString[(i - 1)] = paramArrayOfString[i];
-                str2 = new StringBuilder().append(str2).append(paramArrayOfString[i]).append(" ").toString();
+                str[(i - 1)] = args[i];
+                str2 = new StringBuilder().append(str2).append(args[i]).append(" ").toString();
             }
         }
 
         if (str1.equals("cpublic")) {
-            return onCommand(paramPlayer, "/lwc -c public".split(" "));
+            return onCommand(player, "/lwc -c public".split(" "));
         }
         if (str1.equals("cpassword")) {
-            return onCommand(paramPlayer, new StringBuilder().append("/lwc -c password ").append(str2).toString()
-                    .split(" "));
+            return onCommand(player, new StringBuilder().append("/lwc -c password ").append(str2).toString().split(" "));
         }
         if (str1.equals("cprivate")) {
-            return onCommand(paramPlayer, "/lwc -c private".split(" "));
+            return onCommand(player, "/lwc -c private".split(" "));
         }
         if (str1.equals("cinfo")) {
-            return onCommand(paramPlayer, "/lwc -i".split(" "));
+            return onCommand(player, "/lwc -i".split(" "));
         }
         if (str1.equals("cunlock")) {
-            return onCommand(paramPlayer, "/lwc -u".split(" "));
+            return onCommand(player, "/lwc -u".split(" "));
         }
 
-        if (!paramPlayer.canUseCommand(paramArrayOfString[0])) {
+        if (!player.canUseCommand(args[0])) {
             return false;
         }
 
@@ -472,37 +439,37 @@ public class LWCListener extends PluginListener {
             return false;
         }
 
-        if (arrayOfString.length == 0) {
-            this.lwc.sendFullHelp(paramPlayer);
+        if (str.length == 0) {
+            this.lwc.sendFullHelp(player);
             return true;
         }
 
         for (LWC_Command localCommand : this.lwc.getCommands()) {
-            if (!localCommand.validate(this.lwc, paramPlayer, arrayOfString)) {
+            if (!localCommand.validate(this.lwc, player, str)) {
                 continue;
             }
-            localCommand.execute(this.lwc, paramPlayer, arrayOfString);
+            localCommand.execute(this.lwc, player, str);
             return true;
         }
 
         return false;
     }
 
-    public void onDisconnect(Player paramPlayer) {
-        this.memoryDatabase.unregisterPlayer(paramPlayer.getName());
-        this.memoryDatabase.unregisterUnlock(paramPlayer.getName());
-        this.memoryDatabase.unregisterChest(paramPlayer.getName());
-        this.memoryDatabase.unregisterAllActions(paramPlayer.getName());
+    public void onDisconnect(Player player) {
+        this.memoryDatabase.unregisterPlayer(player.getName());
+        this.memoryDatabase.unregisterUnlock(player.getName());
+        this.memoryDatabase.unregisterChest(player.getName());
+        this.memoryDatabase.unregisterAllActions(player.getName());
     }
 
-    public boolean onExplode(Block paramBlock) {
-        int worldID = paramBlock.getWorld().getType().getId();
-        int i = this.physicalDatabase.loadProtectedEntities(worldID, paramBlock.getX(), paramBlock.getY(),
-                paramBlock.getZ(), 4).size() > 0 ? 1 : 0;
+    public boolean onExplode(Block block) {
+        int worldID = block.getWorld().getType().getId();
+        int i = this.physicalDatabase.loadProtectedEntities(worldID, block.getX(), block.getY(), block.getZ(), 4).size() > 0 ? 1 : 0;
         return i != 0;
     }
 
-    public boolean onItemDrop(Player player, Item dropItem) {
+    public boolean onItemDrop(Player player, ItemEntity itementity) {
+    	Item dropItem = itementity.getItem();
         String playerName = player.getName();
         int i = this.lwc.getPlayerDropTransferTarget(playerName);
 
@@ -511,8 +478,8 @@ public class LWCListener extends PluginListener {
         }
 
         if (!this.physicalDatabase.doesChestExist(i)) {
-            player.sendMessage("Â§4Your drop transfer target was unregistered and/or destroyed.");
-            player.sendMessage("Â§4Please re-register a target chest. Drop transfer will be deactivated.");
+            player.sendMessage("§4Your drop transfer target was unregistered and/or destroyed.");
+            player.sendMessage("§4Please re-register a target chest. Drop transfer will be deactivated.");
 
             this.memoryDatabase.unregisterMode(playerName, "dropTransfer");
             return false;
@@ -521,15 +488,15 @@ public class LWCListener extends PluginListener {
         Entity localEntity = this.physicalDatabase.loadProtectedEntity(i);
 
         if (localEntity == null) {
-            player.sendMessage("Â§4An unknown error occured. Drop transfer will be deactivated.");
+            player.sendMessage("§4An unknown error occured. Drop transfer will be deactivated.");
 
             this.memoryDatabase.unregisterMode(playerName, "dropTransfer");
             return false;
         }
 
         if (!this.lwc.canAccessChest(player, localEntity)) {
-            player.sendMessage("Â§4You have lost access to your target chest.");
-            player.sendMessage("Â§4Please re-register a target chest. Drop transfer will be deactivated.");
+            player.sendMessage("§4You have lost access to your target chest.");
+            player.sendMessage("§4Please re-register a target chest. Drop transfer will be deactivated.");
 
             this.memoryDatabase.unregisterMode(playerName, "dropTransfer");
             return false;
@@ -569,11 +536,10 @@ public class LWCListener extends PluginListener {
         }
 
         if (amount > 0) {
-            player.sendMessage("Â§4Your chest is full. Drop transfer will be deactivated.");
-            player.sendMessage("Â§4Any remaining quantity that could not be stored will be returned.");
+            player.sendMessage("§4Your chest is full. Drop transfer will be deactivated.");
+            player.sendMessage("§4Any remaining quantity that could not be stored will be returned.");
             this.memoryDatabase.unregisterMode(playerName, "dropTransfer");
-            this.memoryDatabase.registerMode(playerName, "dropTransfer", new StringBuilder().append("f").append(i)
-                    .toString());
+            this.memoryDatabase.registerMode(playerName, "dropTransfer", new StringBuilder().append("f").append(i).toString());
             dropItem.setAmount(amount);
             player.getInventory().addItem(dropItem);
         }
@@ -582,61 +548,72 @@ public class LWCListener extends PluginListener {
         return true;
     }
 
-    public boolean onOpenInventory(Player paramPlayer, Inventory paramInventory) {
-        if ((this.lwc.isAdmin(paramPlayer)) && (!this.debugMode)) {
+    public boolean onOpenInventory(HookParametersOpenInventory openInventory) {
+    	Player player = openInventory.getPlayer();
+    	Inventory inventory = openInventory.getInventory();
+    	
+        if ((this.lwc.isAdmin(player)) && (!this.debugMode)) {
             return false;
         }
 
-        if ((paramInventory instanceof Workbench)) {
+        if ((inventory instanceof Workbench)) {
             return false;
         }
 
-        /*
-         * if ((paramInventory instanceof Dispenser)) { return false; }
-         */
+        if ((inventory instanceof EnchantmentTable)) { return false; }
 
-        ComplexBlock localComplexBlock1 = (ComplexBlock) paramInventory;
+        ComplexBlock cb = (ComplexBlock) inventory;
 
-        if (!isProtectable(localComplexBlock1.getBlock())) {
+        if (!isProtectable(cb.getBlock())) {
             return false;
         }
 
-        List<ComplexBlock> localList = this.lwc.getEntitySet(paramPlayer.getWorld(), localComplexBlock1.getX(),
-                localComplexBlock1.getY(), localComplexBlock1.getZ());
-        boolean bool = true;
+        List<ComplexBlock> localList = this.lwc.getEntitySet(player.getWorld(), cb.getX(), cb.getY(), cb.getZ());
+        boolean access = true;
 
-        for (ComplexBlock localComplexBlock2 : localList) {
-            if (localComplexBlock2 == null) {
+        for (ComplexBlock cb2 : localList) {
+            if (cb2 == null) {
                 continue;
             }
-            int worldID = paramPlayer.getWorld().getType().getId();
-            Entity localEntity = this.physicalDatabase.loadProtectedEntity(worldID, localComplexBlock2.getX(),
-                    localComplexBlock2.getY(), localComplexBlock2.getZ());
+            int worldID = player.getWorld().getType().getId();
+            Entity entity = this.physicalDatabase.loadProtectedEntity(worldID, cb2.getX(), cb2.getY(), cb2.getZ());
 
-            if (localEntity == null) {
+            if (entity == null) {
                 continue;
             }
-            bool = this.lwc.canAccessChest(paramPlayer, localEntity);
+            access = this.lwc.canAccessChest(player, entity);
 
-            switch (localEntity.getType()) {
+            switch (entity.getType()) {
             case 1:
-                if (bool)
+                if (access){
                     break;
-                this.memoryDatabase.unregisterUnlock(paramPlayer.getName());
-                this.memoryDatabase.registerUnlock(paramPlayer.getName(), localEntity.getID());
+                }
+                this.memoryDatabase.unregisterUnlock(player.getName());
+                this.memoryDatabase.registerUnlock(player.getName(), entity.getID());
 
-                paramPlayer.sendMessage("Â§4This chest is locked.");
-                paramPlayer.sendMessage("Â§4Type Â§6/lwc -u <password>Â§4 to unlock it");
+                player.sendMessage("§4This chest is locked.");
+                player.sendMessage("§4Type §6/lwc -u <password>§4 to unlock it");
                 break;
             case 2:
-                if (bool)
-                    break;
-                paramPlayer.sendMessage("Â§4This chest is locked with a magical spell.");
+                if (access){
+                	break;
+                }
+                player.sendMessage("§4This chest is locked with a magical spell.");
             }
 
         }
 
-        return !bool;
+        return !access;
+    }
+    
+    public boolean onBlockRightClick(Player player, Block block, Item iih){
+    	int worldID = player.getWorld().getType().getId();
+    	if (isUpperDoor(block)) {
+            block = block.getWorld().getBlockAt(block.getX(), block.getY()-1, block.getZ());
+        }
+    	Entity localEntity = this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ());
+    	boolean bool1 = this.lwc.canAccessChest(player, localEntity);
+    	return !bool1;
     }
 
     private boolean isProtectable(Block paramBlock) {

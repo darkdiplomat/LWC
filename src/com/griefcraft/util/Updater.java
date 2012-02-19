@@ -11,22 +11,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Updater {
     private Logger              logger        = Logger.getLogger(getClass().getSimpleName());
-    // private static final String UPDATE_SITE =
-    // "https://github.com/Hidendra/LWC/raw/master/";
-    private static final String UPDATE_SITE   = "https://github.com/talmor/LWC-For-Canary/raw/master/DIST/";
+    private static final String UPDATE_SITE   = "https://github.com/darkdiplomat/LWC/raw/master/DIST/LWC.jar";
     private static final String VERSION_FILE  = "VERSION";
     private static final String DIST_FILE     = "LWC.jar";
-    private List<UpdaterFile>   needsUpdating = new ArrayList();
+    private List<UpdaterFile>   needsUpdating = new ArrayList<UpdaterFile>();
 
-    public Updater() {
-        // enableSSL();
-    }
+    public Updater() { }
 
     public void check() {
         String[] paths = { "lib/sqlite.jar", "lib/" + getOSSpecificFileName() };
@@ -40,7 +35,7 @@ public class Updater {
 
                 this.needsUpdating.add(updaterFile);
             }
-        }
+        } 
 
         double latestVersion = getLatestVersion();
 
@@ -89,13 +84,6 @@ public class Updater {
 
         return 0.0D;
     }
-
-    // private void enableSSL()
-    // {
-    // Security.addProvider(new Provider());
-    // System.setProperty("java.protocol.handler.pkgs",
-    // "com.sun.net.ssl.internal.www.protocol");
-    // }
 
     public String getOSSpecificFileName() {
         String osname = System.getProperty("os.name").toLowerCase();

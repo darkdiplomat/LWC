@@ -1,9 +1,9 @@
 package com.griefcraft.model;
 
 public class Action {
-    public int id;
-    private String action;
-    private String player;
+	public int id;
+	private String action;
+	private String player;
     private int chestID;
     private String data;
 

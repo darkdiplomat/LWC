@@ -3,27 +3,26 @@ package com.griefcraft.sql;
 import com.griefcraft.model.Action;
 import com.griefcraft.model.Entity;
 import com.griefcraft.util.Performance;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MemDB extends Database {
-    public Action getAction(String paramString1, String paramString2) {
+    public Action getAction(String name, String act) {
         try {
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("SELECT * FROM `actions` WHERE `player` = ? AND `action` = ?");
-            localPreparedStatement.setString(1, paramString2);
-            localPreparedStatement.setString(2, paramString1);
-            ResultSet localResultSet = localPreparedStatement.executeQuery();
-            if (localResultSet.next()) {
-                int i = localResultSet.getInt("id");
-                String str1 = localResultSet.getString("action");
-                String str2 = localResultSet.getString("player");
-                int j = localResultSet.getInt("chest");
-                String str3 = localResultSet.getString("data");
+            PreparedStatement ps = this.connection.prepareStatement("SELECT * FROM `actions` WHERE `player` = ? AND `action` = ?");
+            ps.setString(1, name);
+            ps.setString(2, act);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+            	int i = rs.getInt("id");
+                String str1 = rs.getString("action");
+                String str2 = rs.getString("player");
+                int j = rs.getInt("chest");
+                String str3 = rs.getString("data");
                 Action localAction = new Action();
                 localAction.setID(i);
                 localAction.setAction(str1);
@@ -32,92 +31,91 @@ public class MemDB extends Database {
                 localAction.setData(str3);
                 return localAction;
             }
-            localPreparedStatement.close();
+            ps.close();
             Performance.addMemDBQuery();
-        } catch (Exception localException) {
-            localException.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public int getActionID(String paramString1, String paramString2) {
+    public int getActionID(String act, String name) {
         try {
             int i = -1;
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("SELECT `chest` FROM `actions` WHERE `action` = ? AND `player` = ?");
-            localPreparedStatement.setString(1, paramString1);
-            localPreparedStatement.setString(2, paramString2);
-            ResultSet localResultSet = localPreparedStatement.executeQuery();
-            while (localResultSet.next())
-                i = localResultSet.getInt("chest");
-            localPreparedStatement.close();
+            PreparedStatement ps = this.connection.prepareStatement("SELECT `chest` FROM `actions` WHERE `action` = ? AND `player` = ?");
+            ps.setString(1, act);
+            ps.setString(2, name);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()){
+            	i = rs.getInt("chest");
+            }
+            rs.close();
             Performance.addMemDBQuery();
             return i;
-        } catch (Exception localException) {
-            localException.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return -1;
     }
 
-    public List<String> getActions(String paramString) {
-        ArrayList localArrayList = new ArrayList();
+    public List<String> getActions(String name) {
+    	ArrayList<String> actlist = new ArrayList<String>();
         try {
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("SELECT `action` FROM `actions` WHERE `player` = ?");
-            localPreparedStatement.setString(1, paramString);
-            ResultSet localResultSet = localPreparedStatement.executeQuery();
-            while (localResultSet.next()) {
-                String str = localResultSet.getString("action");
-                localArrayList.add(str);
+        	PreparedStatement ps = this.connection.prepareStatement("SELECT `action` FROM `actions` WHERE `player` = ?");
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+            	String str = rs.getString("action");
+            	actlist.add(str);
             }
-        } catch (Exception localException) {
-            localException.printStackTrace();
+        } catch (SQLException e) {
+        	e.printStackTrace();
         }
-        return localArrayList;
+        return actlist;
     }
 
     public String getDatabasePath() {
         return ":memory:";
     }
 
-    public String getLockPassword(String paramString) {
+    public String getLockPassword(String name) {
         try {
             String str = "";
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("SELECT `password` FROM `locks` WHERE `player` = ?");
-            localPreparedStatement.setString(1, paramString);
-            ResultSet localResultSet = localPreparedStatement.executeQuery();
-            while (localResultSet.next())
-                str = localResultSet.getString("password");
-            localPreparedStatement.close();
+            PreparedStatement ps = this.connection.prepareStatement("SELECT `password` FROM `locks` WHERE `player` = ?");
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()){
+            	str = rs.getString("password");
+            }
+            ps.close();
             Performance.addMemDBQuery();
             return str;
-        } catch (Exception localException) {
-            localException.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public String getModeData(String paramString1, String paramString2) {
-        String str = null;
-        try {
-            PreparedStatement localPreparedStatement = this.connection
-                    .prepareStatement("SELECT `data` from `modes` WHERE `player` = ? AND `mode` = ?");
-            localPreparedStatement.setString(1, paramString1);
-            localPreparedStatement.setString(2, paramString2);
-            ResultSet localResultSet = localPreparedStatement.executeQuery();
-            if (localResultSet.next())
-                str = localResultSet.getString("data");
-            localPreparedStatement.close();
+    public String getModeData(String name, String mode) {
+    	String str = null;
+    	try {
+            PreparedStatement ps = this.connection.prepareStatement("SELECT `data` from `modes` WHERE `player` = ? AND `mode` = ?");
+            ps.setString(1, name);
+            ps.setString(2, mode);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()){
+                str = rs.getString("data");
+            }
+            ps.close();
             Performance.addMemDBQuery();
-        } catch (Exception localException) {
-            localException.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return str;
     }
 
     public List<String> getModes(String paramString) {
-        ArrayList localArrayList = new ArrayList();
+        ArrayList<String> localArrayList = new ArrayList<String>();
         try {
             PreparedStatement localPreparedStatement = this.connection
                     .prepareStatement("SELECT * from `modes` WHERE `player` = ?");
@@ -136,7 +134,7 @@ public class MemDB extends Database {
     }
 
     public List<String> getSessionUsers(int paramInt) {
-        ArrayList localArrayList = new ArrayList();
+        ArrayList<String> localArrayList = new ArrayList<String>();
         try {
             PreparedStatement localPreparedStatement = this.connection
                     .prepareStatement("SELECT `player` FROM `sessions` WHERE `chest` = ?");
@@ -185,7 +183,7 @@ public class MemDB extends Database {
     }
 
     public boolean hasMode(String paramString1, String paramString2) {
-        List localList = getModes(paramString1);
+        List<String> localList = getModes(paramString1);
         return (localList.size() > 0) && (localList.contains(paramString2));
     }
 

@@ -2,6 +2,7 @@ package com.griefcraft.sql;
 
 import com.griefcraft.logging.Logger;
 import com.griefcraft.util.ConfigValues;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -20,7 +21,7 @@ public abstract class Database {
         if (this.connection != null) {
             return true;
         }
-
+        
         Class.forName("org.sqlite.JDBC");
         this.connection = DriverManager.getConnection("jdbc:sqlite:" + getDatabasePath());
         connected = true;

@@ -1,7 +1,5 @@
 package com.griefcraft.logging;
 
-import java.io.PrintStream;
-
 public class Logger {
     private String name;
 

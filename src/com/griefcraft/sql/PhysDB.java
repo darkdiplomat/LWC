@@ -2,7 +2,6 @@ package com.griefcraft.sql;
 
 import com.griefcraft.model.Entity;
 import com.griefcraft.util.Performance;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -228,7 +227,7 @@ public class PhysDB extends Database {
     }
 
     public List<Entity> loadProtectedEntities(int worldID, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-        ArrayList localArrayList = new ArrayList();
+        ArrayList<Entity> localArrayList = new ArrayList<Entity>();
         try {
             this._select_protectedEntity_x_y_z_world_radius.setInt(1, paramInt1 - paramInt4);
             this._select_protectedEntity_x_y_z_world_radius.setInt(2, paramInt1 + paramInt4);
