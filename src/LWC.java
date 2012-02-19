@@ -20,6 +20,7 @@ public class LWC extends Plugin {
     private Updater updater;
     private List<LWC_Command> commands;
     private final LWCHook lwch = new LWCHook(this);
+    private boolean reload = false;
 
     public boolean canAccessChest(Player player, Entity chest) {
         if (chest == null) {
@@ -129,16 +130,15 @@ public class LWC extends Plugin {
             Config.init();
 
             this.updater = new Updater();
-            //this.updater.check();
-            //this.updater.update();
+            this.updater.check();
+            this.updater.update();
 
             
-           /* if ((ConfigValues.AUTO_UPDATE.getBool()) && (this.updater.checkDist())) {
-            *	log("Reloading LWC");
-            *	etc.getLoader().reloadPlugin("LWC");
-            *	return;
-            *}
-            */
+            if ((ConfigValues.AUTO_UPDATE.getBool()) && (this.updater.checkDist())) {
+            	log("Reloading LWC");
+            	reload = true;
+            	return;
+            }
 
             log("LWC config: lwc.properties");
             log("SQLite jar: lib/sqlite.jar");
@@ -254,15 +254,12 @@ public class LWC extends Plugin {
     public List<ComplexBlock> getEntitySet(World world, int x, int y, int z) {
         List<ComplexBlock> entities = new ArrayList<ComplexBlock>(2);
 
-        // ComplexBlock baseBlock = etc.getServer().getComplexBlock(x, y, z);
         ComplexBlock baseBlock = world.getComplexBlock(x, y, z);
         int dev = -1;
         boolean isXDir = true;
 
         entities = validateChest(entities, baseBlock);
         while (true) {
-            // ComplexBlock block = etc.getServer().getComplexBlock(x + (isXDir
-            // ? dev : 0), y, z + (isXDir ? 0 : dev));
             ComplexBlock block = world.getComplexBlock(x + (isXDir ? dev : 0), y, z + (isXDir ? 0 : dev));
             entities = validateChest(entities, block);
 
@@ -300,25 +297,30 @@ public class LWC extends Plugin {
     }
 
     public void initialize() {
-        if (!Database.isConnected()) {
-            return;
-        }
-
-        log("Registering hooks");
-
-        this.listener = new LWCListener(this);
-
-        registerHook(PluginLoader.Hook.DISCONNECT);
-        registerHook(PluginLoader.Hook.COMMAND);
-
-        registerHook(PluginLoader.Hook.BLOCK_BROKEN);
-        registerHook(PluginLoader.Hook.BLOCK_DESTROYED);
-        registerHook(PluginLoader.Hook.OPEN_INVENTORY);
-        registerHook(PluginLoader.Hook.EXPLODE);
-        registerHook(PluginLoader.Hook.ITEM_DROP);
-        registerHook(PluginLoader.Hook.BLOCK_RIGHTCLICKED);
-        
-        etc.getLoader().addCustomListener(lwch.AccessCheck);
+    	if(!reload){
+		    if (!Database.isConnected()) {
+		        return;
+		    }
+		
+		    log("Registering hooks");
+		
+		    this.listener = new LWCListener(this);
+		
+		    registerHook(PluginLoader.Hook.DISCONNECT);
+		    registerHook(PluginLoader.Hook.COMMAND);
+		
+		    registerHook(PluginLoader.Hook.BLOCK_BROKEN);
+		    registerHook(PluginLoader.Hook.BLOCK_DESTROYED);
+		    registerHook(PluginLoader.Hook.OPEN_INVENTORY);
+		    registerHook(PluginLoader.Hook.EXPLODE);
+		    registerHook(PluginLoader.Hook.ITEM_DROP);
+		    registerHook(PluginLoader.Hook.BLOCK_RIGHTCLICKED);
+		    
+		    etc.getLoader().addCustomListener(lwch.AccessCheck);
+    	}
+    	else{
+    		etc.getLoader().reloadPlugin("LWC");
+    	}
     }
 
     public boolean isAdmin(Player player) {

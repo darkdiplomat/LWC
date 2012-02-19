@@ -12,11 +12,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class Updater {
     private Logger              logger        = Logger.getLogger(getClass().getSimpleName());
-    private static final String UPDATE_SITE   = "https://github.com/darkdiplomat/LWC/raw/master/DIST/LWC.jar";
+    private static final String UPDATE_SITE   = "https://github.com/darkdiplomat/LWC/raw/master/DIST/";
     private static final String VERSION_FILE  = "VERSION";
     private static final String DIST_FILE     = "LWC.jar";
     private List<UpdaterFile>   needsUpdating = new ArrayList<UpdaterFile>();
@@ -125,6 +128,9 @@ public class Updater {
         this.logger.info("Need to download " + this.needsUpdating.size() + " object(s)");
 
         for (UpdaterFile item : this.needsUpdating) {
+        	if(item.getLocalLocation().contains("LWC.jar")){
+        		loadAllClasses(item.getLocalLocation());
+        	}
             this.logger.info(" - Downloading file : " + item.getRemoteLocation());
 
             URL url = new URL(item.getRemoteLocation());
@@ -152,5 +158,28 @@ public class Updater {
 
         while ((len = inputStream.read(buffer)) > 0)
             outputStream.write(buffer, 0, len);
+    }
+    
+    private void loadAllClasses(String file) throws Exception{
+        // Load the jar
+        JarFile jar = new JarFile(file);
+
+        // Walk through all of the entries
+        Enumeration<JarEntry> enumeration = jar.entries();
+
+        while (enumeration.hasMoreElements()){
+            JarEntry entry = enumeration.nextElement();
+            String name = entry.getName();
+            
+            // is it a class file?
+            if (name.endsWith(".class")){
+                // convert to package
+                String path = name.replaceAll("/", ".");
+                path = path.substring(0, path.length() - ".class".length());
+
+                // Load it
+                this.getClass().getClassLoader().loadClass(path);
+            }
+        }
     }
 }

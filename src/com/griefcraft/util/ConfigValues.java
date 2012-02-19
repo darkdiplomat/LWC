@@ -3,9 +3,9 @@ package com.griefcraft.util;
 public enum ConfigValues{
 	BLACKLISTED_MODES("blacklisted-modes", ""), 
 	ALLOW_FURNACE_PROTECTION("furnace-locks", "true"), 
-	DB_PATH("db-path", "lwc.db");
+	DB_PATH("db-path", "lwc.db"),
 	//CUBOID_SAFE_AREAS("only-protect-in-cuboid-safe-zones", "false"), DISABLED
-	//AUTO_UPDATE("auto-update", "false"); DISABLED
+	AUTO_UPDATE("auto-update", "true");
 
 	private String name;
 	private String defaultValue;

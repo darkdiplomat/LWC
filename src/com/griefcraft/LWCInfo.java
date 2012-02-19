@@ -7,4 +7,3 @@ public class LWCInfo{
   public static final String CONF_FILE = "lwc.properties";
   
 }
-

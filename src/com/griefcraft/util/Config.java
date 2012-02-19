@@ -30,22 +30,24 @@ public class Config extends Properties{
 	}
  
 	private Config(){
-		for (ConfigValues value : ConfigValues.values()) {
-			setProperty(value.getName(), value.getDefaultValue());
-		}
-
 		try{
 			File conf = new File("lwc.properties");
 
+			for (ConfigValues value : ConfigValues.values()) {
+				if(!this.containsKey(value.getName())){
+					setProperty(value.getName(), value.getDefaultValue());
+				}
+			}
+			
 			if (!conf.exists()) {
 				save();
 				return;
 			}
-
+			
 			InputStream inputStream = new FileInputStream(conf);
 			load(inputStream);
 			inputStream.close();
-
+			
 			this.logger.info("Loaded " + size() + " config entries");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -64,6 +66,7 @@ public class Config extends Properties{
 			
 			store(outputStream, "# LWC configuration file "+NL+NL+"# + Github project page: https://github.com/darkdiplomat/LWC "+NL+"# + Canary thread link: http://forums.canarymod.net/?topic=22.0"+NL);
 			outputStream.close();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
