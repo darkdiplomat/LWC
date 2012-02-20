@@ -13,8 +13,8 @@ import java.util.Formatter;
 import java.util.List;
 
 public class LWC extends Plugin {
-	private Logger logger = Logger.getLogger(getClass().getSimpleName());
-	private LWCListener listener;
+    private Logger logger = Logger.getLogger(getClass().getSimpleName());
+    private LWCListener listener;
     private PhysDB physicalDatabase;
     private MemDB memoryDatabase;
     private Updater updater;
@@ -51,9 +51,9 @@ public class LWC extends Plugin {
         case 2:
             PhysDB instance = physicalDatabase;
             if (!player.getName().equalsIgnoreCase(chest.getOwner())){
-            	if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) == -1) && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) == -1)){
-            		return false;
-            	}
+                if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) == -1) && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) == -1)){
+                    return false;
+                }
             }
             return true;
         }
@@ -61,8 +61,8 @@ public class LWC extends Plugin {
     }
 
     public boolean canAccessChest(Player player, int x, int y, int z) {
-    	int worldID = player.getWorld().getType().getId();
-    	return canAccessChest(player, physicalDatabase.loadProtectedEntity(worldID, x, y, z));
+        int worldID = player.getWorld().getType().getId();
+        return canAccessChest(player, physicalDatabase.loadProtectedEntity(worldID, x, y, z));
     }
 
     public boolean canAdminChest(Player player, Entity chest) {
@@ -82,8 +82,8 @@ public class LWC extends Plugin {
         case 2:
             PhysDB instance = this.physicalDatabase;
             if (!player.getName().equalsIgnoreCase(chest.getOwner())){
-            	if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) != 1)  && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) != 1)){
-            		return false;
+                if ((instance.getPrivateAccess(1, chest.getID(), new String[] { player.getName() }) != 1)  && (instance.getPrivateAccess(0, chest.getID(), player.getGroups()) != 1)){
+                    return false;
                 }
             }
             return true;
@@ -99,12 +99,12 @@ public class LWC extends Plugin {
         etc.getLoader().removeCustomListener("LWC-AccessCheck");
         etc.getInstance().removeCommand("/lwc");
         try {
-        	
-        	if(physicalDatabase.connection != null && !physicalDatabase.connection.isClosed()){
-        		physicalDatabase.connection.close();
-        	}
+            
+            if(physicalDatabase.connection != null && !physicalDatabase.connection.isClosed()){
+                physicalDatabase.connection.close();
+                }
             if(memoryDatabase.connection != null && !memoryDatabase.connection.isClosed()){
-            	memoryDatabase.connection.close();
+                memoryDatabase.connection.close();
             }
             
             physicalDatabase = null;
@@ -137,12 +137,12 @@ public class LWC extends Plugin {
             updater.check();
 
             if ((ConfigValues.AUTO_UPDATE.getBool()) && (updater.checkDist())) {
-            	log("Reloading LWC");
-            	reload = true;
-            	return;
+                log("Reloading LWC");
+                reload = true;
+                return;
             }
             else{
-            	updater.update();
+                updater.update();
             }
 
             log("LWC config: lwc.properties");
@@ -151,7 +151,7 @@ public class LWC extends Plugin {
             log("DB location: " + physicalDatabase.getDatabasePath());
 
             log("Opening sqlite databases");
-            
+
             physicalDatabase.connect();
             memoryDatabase.connect();
 
@@ -164,8 +164,8 @@ public class LWC extends Plugin {
             /*if (ConfigValues.CUBOID_SAFE_AREAS.getBool()) {
              *  log("Only allowing chests to be protected in Cuboid-protected zones that DO NOT have PvP toggled!");
              *}
-			 */
-            
+             */
+
             Config.getInstance().save();
         } catch (Exception e) {
             log("Error occured while initializing LWC : " + e.getMessage());
@@ -204,7 +204,7 @@ public class LWC extends Plugin {
             }
         } 
         else {
-        	List<String> inheritedGroups = new ArrayList<String>();
+            List<String> inheritedGroups = new ArrayList<String>();
             String groupName = player.getGroups().length > 0 ? player.getGroups()[0] : etc.getInstance().getDefaultGroup().Name;
 
             inheritedGroups.add(groupName);
@@ -300,33 +300,33 @@ public class LWC extends Plugin {
     }
 
     public void initialize() {
-    	if(!reload && !failure){
-		    if (!Database.isConnected()) {
-		        return;
-		    }
-		
-		    log("Registering hooks");
-		
-		    listener = new LWCListener(this);
-		
-		    registerHook(PluginLoader.Hook.DISCONNECT);
-		    registerHook(PluginLoader.Hook.COMMAND);
-		
-		    registerHook(PluginLoader.Hook.BLOCK_BROKEN);
-		    registerHook(PluginLoader.Hook.BLOCK_DESTROYED);
-		    registerHook(PluginLoader.Hook.OPEN_INVENTORY);
-		    registerHook(PluginLoader.Hook.EXPLODE);
-		    registerHook(PluginLoader.Hook.ITEM_DROP);
-		    registerHook(PluginLoader.Hook.BLOCK_RIGHTCLICKED);
-		    
-		    etc.getLoader().addCustomListener(lwch.AccessCheck);
-    	}
-    	else if (!failure){
-    		etc.getLoader().reloadPlugin("LWC");
-    	}
-    	else{
-    		etc.getLoader().disablePlugin("LWC");
-    	}
+        if(!reload && !failure){
+            if (!Database.isConnected()) {
+                return;
+            }
+
+            log("Registering hooks");
+            
+            listener = new LWCListener(this);
+            
+            registerHook(PluginLoader.Hook.DISCONNECT);
+            registerHook(PluginLoader.Hook.COMMAND);
+
+            registerHook(PluginLoader.Hook.BLOCK_BROKEN);
+            registerHook(PluginLoader.Hook.BLOCK_DESTROYED);
+            registerHook(PluginLoader.Hook.OPEN_INVENTORY);
+            registerHook(PluginLoader.Hook.EXPLODE);
+            registerHook(PluginLoader.Hook.ITEM_DROP);
+            registerHook(PluginLoader.Hook.BLOCK_RIGHTCLICKED);
+
+            etc.getLoader().addCustomListener(lwch.AccessCheck);
+        }
+        else if (!failure){
+            etc.getLoader().reloadPlugin("LWC");
+        }
+        else{
+            etc.getLoader().disablePlugin("LWC");
+        }
     }
 
     public boolean isAdmin(Player player) {

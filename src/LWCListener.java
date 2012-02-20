@@ -33,12 +33,13 @@ public class LWCListener extends PluginListener {
             if (cb == null) {
                 continue;
             }
+
             entity = this.physicalDatabase.loadProtectedEntity(worldID, cb.getX(), cb.getY(), cb.getZ());
 
             if (entity == null) {
                 continue;
             }
-            
+
             access = this.lwc.canAccessChest(player, entity);
             admin = this.lwc.canAdminChest(player, entity);
         }
@@ -76,17 +77,18 @@ public class LWCListener extends PluginListener {
                 if (entity == null) {
                     continue;
                 }
-                
                 access = this.lwc.canAccessChest(player, entity);
                 i = 0;
             }
-        } else if (block.getType() == 64){
+        } 
+        else if (block.getType() == 64){
             if (isUpperDoor(block)) {
                 block = block.getWorld().getBlockAt(block.getX(), block.getY()-1, block.getZ());
             }
             entity = this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ());
             access = this.lwc.canAccessChest(player, entity);
-        } else {
+        } 
+        else {
             // Only ComplexBlocks or Doors
             return false;
         }
@@ -103,7 +105,7 @@ public class LWCListener extends PluginListener {
         boolean op_modify = acts.contains("modify");
         boolean op_drop = acts.contains("dropTransferSelect");
         List<String> sess;
-        Iterator<String> iterator = null;
+        Iterator<String> iString = null;
         Action action;
         // Object localObject5;
         int n;
@@ -112,38 +114,37 @@ public class LWCListener extends PluginListener {
             i = 0;
 
             if (op_info) {
-                String str1 = "";
+                String authps = "";
 
                 if (entity.getType() == 1) {
                     sess = this.memoryDatabase.getSessionUsers(entity.getID());
 
-                    for (iterator = sess.iterator(); iterator.hasNext();) {
-                        String str2 = iterator.next();
-                        Player localPlayer = etc.getServer().getPlayer(str2);
+                    for (iString = sess.iterator(); iString.hasNext();) {
+                        String authp = iString.next();
+                        Player play = etc.getServer().getPlayer(authp);
 
-                        if (localPlayer == null) {
+                        if (play == null) {
                             continue;
                         }
-                        str1 = new StringBuilder().append(str1).append(localPlayer.getColor()).append(str2)
-                                .append("§f").append(", ").toString();
+                        authps = new StringBuilder().append(authps).append(play.getColor()).append(authp).append("§f").append(", ").toString();
                     }
 
                     if (sess.size() > 0) {
-                        str1 = str1.substring(0, str1.length() - 4);
+                        authps = authps.substring(0, authps.length() - 4);
                     }
                 }
 
-                String str = " ";
+                String mode = " ";
 
                 switch (entity.getType()) {
                 case 0:
-                    str = "Public";
+                    mode = "Public";
                     break;
                 case 1:
-                    str = "Password";
+                    mode = "Password";
                     break;
                 case 2:
-                    str = "Private";
+                    mode = "Private";
                 }
 
                 boolean admin = this.lwc.canAdminChest(player, entity);
@@ -152,11 +153,11 @@ public class LWCListener extends PluginListener {
                     player.sendMessage(new StringBuilder().append("§2ID: §6").append(entity.getID()).toString());
                 }
 
-                player.sendMessage(new StringBuilder().append("§2Type: §6").append(str).toString());
+                player.sendMessage(new StringBuilder().append("§2Type: §6").append(mode).toString());
                 player.sendMessage(new StringBuilder().append("§2Owner: §6").append(entity.getOwner()).toString());
 
                 if ((entity.getType() == 1) && (admin)) {
-                    player.sendMessage(new StringBuilder().append("§2Authed players: ").append(str1).toString());
+                    player.sendMessage(new StringBuilder().append("§2Authed players: ").append(authps).toString());
                 }
 
                 if (admin) {
@@ -215,7 +216,7 @@ public class LWCListener extends PluginListener {
                 }
                 return true;
             }
-            if (op_modify) {
+            if (op_modify) { //TODO CLEANUP
                 if (this.lwc.canAdminChest(player, entity)) {
                     action = this.memoryDatabase.getAction("modify", player.getName());
 
@@ -300,7 +301,7 @@ public class LWCListener extends PluginListener {
             return true;
         }
 
-        if ((i != 0) && (op_create)) {
+        if ((i != 0) && (op_create)) { //TODO CLEANUP
             action = this.memoryDatabase.getAction("create", player.getName());
 
             String str = action.getData();
@@ -325,8 +326,8 @@ public class LWCListener extends PluginListener {
          *      player.sendMessage("§4You need to be in a Cuboid-protected safe zone to do that!");
          *      this.memoryDatabase.unregisterAllActions(player.getName());
          *      return false;
-         *	}
-	     */
+         *  }
+         */
             
             if (cmd.equals("public")) {
                 this.physicalDatabase.registerProtectedEntity(worldID, 0, player.getName(), "", block.getX(), block.getY(), block.getZ());
@@ -605,42 +606,37 @@ public class LWCListener extends PluginListener {
     }
     
     public boolean onBlockRightClick(Player player, Block block, Item iih){
-    	int worldID = player.getWorld().getType().getId();
-    	if (isUpperDoor(block)) {
+        int worldID = player.getWorld().getType().getId();
+        if (isUpperDoor(block)) {
             block = block.getWorld().getBlockAt(block.getX(), block.getY()-1, block.getZ());
         }
-    	Entity localEntity = this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ());
-    	boolean bool1 = this.lwc.canAccessChest(player, localEntity);
-    	return !bool1;
+        Entity localEntity = this.physicalDatabase.loadProtectedEntity(worldID, block.getX(), block.getY(), block.getZ());
+        boolean access = this.lwc.canAccessChest(player, localEntity);
+        return !access;
     }
 
-    private boolean isProtectable(Block paramBlock) {
-        switch (paramBlock.getType()) {
-        case 23: /* Dispensers */
-            return true;
+    private boolean isProtectable(Block block) {
+        switch (block.getType()) {
+        case 23:
         case 54:
-            return true;
         case 61:
         case 62:
         case 64:
             return true;
+        default:
+            return false;
         }
-
-        return false;
     }
 
-    private boolean isComplexBlock(Block paramBlock) {
-        switch (paramBlock.getType()) {
-        case 23: /* Dispensers */
-            return true;
+    private boolean isComplexBlock(Block block) {
+        switch (block.getType()) {
+        case 23:
         case 54:
-            return true;
         case 61:
         case 62:
             return true;
+        default:
+            return false;
         }
-
-        return false;
     }
-
 }

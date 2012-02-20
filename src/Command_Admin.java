@@ -2,41 +2,41 @@ import com.griefcraft.util.Performance;
 import com.griefcraft.util.StringUtils;
 
 public class Command_Admin implements LWC_Command {
-	public void execute(LWC lwc, Player player, String[] args) {
-		if (args.length < 2) {
-			sendHelp(player);
-			return;
-		}
+    public void execute(LWC lwc, Player player, String[] args) {
+        if (args.length < 2) {
+            sendHelp(player);
+            return;
+        }
 
-		String action = args[1].toLowerCase();
+        String action = args[1].toLowerCase();
 
-		if (action.equals("report")) {
-			Performance.setChestCount(lwc.getPhysicalDatabase().entityCount());
-			Performance.setPlayersOnline(etc.getServer().getPlayerList().size());
+        if (action.equals("report")) {
+            Performance.setChestCount(lwc.getPhysicalDatabase().entityCount());
+            Performance.setPlayersOnline(etc.getServer().getPlayerList().size());
 
-			for (String line : Performance.getGeneratedReport()) {
-				player.sendMessage("§2" + line);
-			}
+            for (String line : Performance.getGeneratedReport()) {
+                player.sendMessage("§2" + line);
+            }
 
             Performance.clear();
         } 
-		else if (action.equals("update")) {
-			boolean updated = lwc.getUpdater().checkDist();
+        else if (action.equals("update")) {
+            boolean updated = lwc.getUpdater().checkDist();
 
-			if (updated) {
-				player.sendMessage("§2Updated LWC successfully to version: " + lwc.getUpdater().getLatestVersion());
-				etc.getLoader().reloadPlugin("LWC");
-			} 
-			else {
-				player.sendMessage("§4No update found.");
-			}
+            if (updated) {
+                player.sendMessage("§2Updated LWC successfully to version: " + lwc.getUpdater().getLatestVersion());
+                etc.getLoader().reloadPlugin("LWC");
+            } 
+            else {
+                player.sendMessage("§4No update found.");
+            }
 
         } 
-		else if (action.equalsIgnoreCase("limits")) {
-			if (args.length < 3) {
-				lwc.sendSimpleUsage(player, "/lwc -admin limits <count> <Group/User>");
-				return;
-			}
+        else if (action.equalsIgnoreCase("limits")) {
+            if (args.length < 3) {
+                lwc.sendSimpleUsage(player, "/lwc -admin limits <count> <Group/User>");
+                return;
+            }
 
             int limit = Integer.parseInt(args[2]);
 
@@ -58,9 +58,8 @@ public class Command_Admin implements LWC_Command {
                     player.sendMessage("§2Unregistered limit for §6" + entity);
                 }
             }
-
         }
-		else if (action.equals("convert")) {
+        else if (action.equals("convert")) {
             if (args.length < 2) {
                 lwc.sendSimpleUsage(player, "/lwc -admin convert chestprotect");
                 return;
@@ -73,7 +72,7 @@ public class Command_Admin implements LWC_Command {
             }
 
         } 
-		else if (action.equals("clear")) {
+        else if (action.equals("clear")) {
             if (args.length < 3) {
                 lwc.sendSimpleUsage(player, "/lwc -admin clear chests|limits|rights");
                 return;
@@ -96,21 +95,20 @@ public class Command_Admin implements LWC_Command {
                 player.sendMessage("§2Removed all protection limits");
             }
         }
-	}
+    }
 
-	public void sendHelp(Player player) {
-		player.sendMessage(" ");
-		player.sendMessage("§2LWC Administration");
-		player.sendMessage(" ");
+    public void sendHelp(Player player) {
+        player.sendMessage("§2LWC Administration");
+        player.sendMessage(" ");
         player.sendMessage("/lwc admin report - §6Generate a Performance report");
         player.sendMessage("/lwc admin update - §6Check for an update (if one, update)");
         player.sendMessage("/lwc admin convert §6<chestprotect> - Convert X to LWC");
         player.sendMessage(" ");
         player.sendMessage("/lwc admin clear - §4PERMANENTLY removes data");
         player.sendMessage("/lwc admin clear §6<protections|rights|limits>");
-	}
+    }
 
-	public boolean validate(LWC lwc, Player player, String[] args) {
-		return (lwc.isAdmin(player)) && ((StringUtils.hasFlag(args, "a")) || (StringUtils.hasFlag(args, "admin")));
-	}
+    public boolean validate(LWC lwc, Player player, String[] args) {
+        return (lwc.isAdmin(player)) && ((StringUtils.hasFlag(args, "a")) || (StringUtils.hasFlag(args, "admin")));
+    }
 }

@@ -1,29 +1,29 @@
 import com.griefcraft.util.StringUtils;
 
 public class Command_Create implements LWC_Command {
-	public void execute(LWC lwc, Player player, String[] args) {
-		if (args.length == 1) {
-			sendHelp(player);
-			return;
-		}
+    public void execute(LWC lwc, Player player, String[] args) {
+        if (args.length == 1) {
+            sendHelp(player);
+            return;
+        }
 
-		String type = args[1].toLowerCase();
-		String full = StringUtils.join(args, 1);
+        String type = args[1].toLowerCase();
+        String full = StringUtils.join(args, 1);
 
-		if (type.equals("password")) {
-			if (args.length < 3) {
-				lwc.sendSimpleUsage(player, "/lwc -c password <Password>");
-				return;
+        if (type.equals("password")) {
+            if (args.length < 3) {
+                lwc.sendSimpleUsage(player, "/lwc -c password <Password>");
+                return;
             }
 
-			String password = StringUtils.join(args, 2);
-			String hiddenPass = StringUtils.transform(password, '*');
+            String password = StringUtils.join(args, 2);
+            String hiddenPass = StringUtils.transform(password, '*');
 
-			player.sendMessage("§aUsing password: §e" + hiddenPass);
-		}
-		else if ((!type.equals("public")) && (!type.equals("private"))) {
-			sendHelp(player);
-			return;
+            player.sendMessage("§aUsing password: §e" + hiddenPass);
+        }
+        else if ((!type.equals("public")) && (!type.equals("private"))) {
+            sendHelp(player);
+            return;
         }
 
         lwc.getMemoryDatabase().unregisterAllActions(player.getName());
@@ -38,7 +38,6 @@ public class Command_Create implements LWC_Command {
     }
 
     public void sendHelp(Player player) {
-        player.sendMessage(" ");
         player.sendMessage("§2LWC Protection");
         player.sendMessage(" ");
 
